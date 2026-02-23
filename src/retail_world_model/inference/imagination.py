@@ -12,14 +12,20 @@ from retail_world_model.training.offline_utils import mopo_lcb
 class ImagineInterface(Protocol):
     """Protocol for world models used in imagination rollouts."""
 
-    def encode_obs(self, x_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]: ...
+    def encode_obs(
+        self, x_t: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]: ...
+
     def imagine_step(
         self,
         z_t: torch.Tensor,
         a_t: torch.Tensor,
-        h_t: torch.Tensor,
+        h_t: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]: ...
-    def reset_state(self, batch_size: int) -> dict[str, torch.Tensor]: ...
+
+    def reset_state(
+        self, batch_size: int
+    ) -> dict[str, torch.Tensor]: ...
 
 
 def rollout_imagination(

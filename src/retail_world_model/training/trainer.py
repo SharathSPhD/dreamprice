@@ -78,7 +78,7 @@ class DreamerTrainer:
     def train_phase_a(self, batch: dict[str, torch.Tensor]) -> dict[str, float]:
         """Phase A: world model update."""
         self.opt_wm.zero_grad()
-        losses = elbo_loss(batch["x_BT"], batch["a_BT"], self.model)
+        losses = elbo_loss(batch, self.model)
         losses["total"].backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_wm)
         self.opt_wm.step()

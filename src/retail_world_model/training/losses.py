@@ -101,8 +101,7 @@ def twohot_ce_loss(
 
 
 def elbo_loss(
-    x_BT: torch.Tensor,
-    a_BT: torch.Tensor,
+    batch: dict[str, torch.Tensor],
     model: object,
     beta_pred: float = BETA_PRED,
     beta_dyn: float = BETA_DYN,
@@ -111,22 +110,31 @@ def elbo_loss(
 ) -> dict[str, torch.Tensor]:
     """Full ELBO loss for world model training.
 
-    L = beta_pred * reconstruction_loss + kl_balancing(posterior, prior)
+    L = beta_pred * (recon + reward + continue) + kl_balancing
 
     Args:
-        x_BT: (B, T, obs_dim) observations.
-        a_BT: (B, T, act_dim) actions.
-        model: World model with forward() returning WorldModelOutput dict.
+        batch: Dict with keys x_BT, a_BT, r_BT, done_BT.
+        model: World model with forward() returning aligned output dict.
 
     Returns:
-        Dict with keys: total, recon, kl_total, kl_dyn, kl_rep.
+        Dict with keys: total, recon, reward, continue, kl_total, kl_dyn, kl_rep.
     """
-    output = model.forward(x_BT, a_BT)  # type: ignore[union-attr]
+    output = model.forward(batch["x_BT"], batch["a_BT"])  # type: ignore[union-attr]
 
     # Reconstruction loss: symlog MSE
     x_recon = output["x_recon_BT"]
-    x_target = symlog(x_BT)
+    x_target = symlog(batch["x_BT"])
     recon_loss = 0.5 * (x_recon - x_target).pow(2).sum(dim=-1).mean()
+
+    # Reward loss: twohot CE
+    reward_loss = twohot_ce_loss(
+        output["reward_logits_BT"], batch["r_BT"]
+    )
+
+    # Continue loss: BCE
+    cont_loss = continue_bce_loss(
+        output["continue_logits"], batch["done_BT"]
+    )
 
     # KL balancing
     kl_total, kl_dyn, kl_rep = kl_balancing(
@@ -137,10 +145,14 @@ def elbo_loss(
         free_bits=free_bits,
     )
 
-    total = beta_pred * recon_loss + kl_total
+    pred_loss = recon_loss + reward_loss + cont_loss
+    total = beta_pred * pred_loss + kl_total
+
     return {
         "total": total,
         "recon": recon_loss,
+        "reward": reward_loss,
+        "continue": cont_loss,
         "kl_total": kl_total,
         "kl_dyn": kl_dyn,
         "kl_rep": kl_rep,

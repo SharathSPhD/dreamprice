@@ -34,6 +34,7 @@ class MambaWorldModel(nn.Module):
             n_categories=n_categories,
             n_store_features=n_store_features,
         )
+        self._inference_params: object | None = None
 
     def forward(
         self,
@@ -45,6 +46,50 @@ class MambaWorldModel(nn.Module):
         Returns dict with latents, backbone outputs, probs, reward stats, continue logits.
         """
         return self.rssm.train_sequence(x_BT, a_BT)
+
+    def reset_state(self, batch_size: int = 1) -> dict[str, torch.Tensor]:
+        """Initialize recurrent state for imagination rollout."""
+        self._inference_params = self.rssm.backbone.init_inference_params(
+            batch_size
+        )
+        device = next(self.parameters()).device
+        h = torch.zeros(batch_size, self.rssm.d_model, device=device)
+        z = torch.zeros(
+            batch_size, self.rssm.n_cat * self.rssm.n_cls, device=device
+        )
+        return {"h": h, "z": z}
+
+    def imagine_step(
+        self,
+        z_t: torch.Tensor,
+        a_t: torch.Tensor,
+        h_t: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Single recurrent step for imagination, matching ImagineInterface.
+
+        Args:
+            z_t: (B, latent_dim) current stochastic state.
+            a_t: (B, act_dim) action (float, not discrete index).
+            h_t: Ignored. Mamba uses internal inference_params.
+
+        Returns:
+            Dict with keys: h, z, r_mean, r_std, continue, prior_probs.
+        """
+        h_next, z_next, prior_probs = self.rssm.imagine_step(
+            z_t, a_t, self._inference_params
+        )
+        r_mean, r_std = self.rssm.reward_ensemble(h_next)
+        cont = torch.sigmoid(
+            self.rssm.continue_head(h_next).squeeze(-1)
+        )
+        return {
+            "h": h_next,
+            "z": z_next,
+            "r_mean": r_mean,
+            "r_std": r_std,
+            "continue": cont,
+            "prior_probs": prior_probs,
+        }
 
     def imagine(
         self,

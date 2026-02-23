@@ -90,7 +90,8 @@ class MambaBackbone(nn.Module):
     def step(self, x_t: torch.Tensor, inference_params: object | None = None) -> torch.Tensor:
         """x_t: (B, d_model) -> (B, d_model). Recurrent inference mode."""
         if self._use_mamba(x_t):
-            out = self.mamba(x_t.unsqueeze(1), inference_params=inference_params)
+            # .contiguous() ensures strides are aligned for causal_conv1d
+            out = self.mamba(x_t.unsqueeze(1).contiguous(), inference_params=inference_params)
             return out.squeeze(1)
         return self.gru_fallback.step(x_t)
 
