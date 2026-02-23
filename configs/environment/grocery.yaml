@@ -1,0 +1,6 @@
+n_skus: 25
+H: 13
+action_steps: 21
+price_range: [0.50, 5.00]
+lambda_vol: 0.05
+margin_floor: 0.10

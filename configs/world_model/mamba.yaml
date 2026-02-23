@@ -1,0 +1,9 @@
+d_model: 512
+d_state: 64
+n_cat: 32
+n_cls: 32
+z_dim: 1024  # n_cat * n_cls
+obs_dim: 64
+act_dim: 25   # n_skus
+n_reward_heads: 5
+dropout: 0.1

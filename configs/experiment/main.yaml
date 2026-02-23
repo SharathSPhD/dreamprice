@@ -1,0 +1,12 @@
+defaults:
+  - /world_model: mamba
+  - /agent: dreamer
+  - /environment: grocery
+
+seed: 42
+n_steps: 100000
+wandb_project: dreamprice
+wandb_group: main
+checkpoint_dir: checkpoints/
+log_every: 100
+save_every: 10000
