@@ -2,8 +2,8 @@
 
 import inspect
 
-import torch
 import pytest
+import torch
 
 from retail_world_model.models.posterior import DecoupledPosterior
 

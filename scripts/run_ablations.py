@@ -108,12 +108,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run DreamPrice ablation studies")
     parser.add_argument("--dry-run", action="store_true", help="Print commands only")
     parser.add_argument("--ablation", type=str, default=None, help="Run single ablation")
+    parser.add_argument("--seeds", type=int, default=N_SEEDS, help="Number of seeds per ablation")
     args = parser.parse_args()
 
+    n_seeds = args.seeds
     ablations = [args.ablation] if args.ablation else ABLATIONS
 
-    total_runs = len(ablations) * N_SEEDS
-    print(f"Ablation sweep: {len(ablations)} ablations x {N_SEEDS} seeds = {total_runs} runs")
+    total_runs = len(ablations) * n_seeds
+    print(f"Ablation sweep: {len(ablations)} ablations x {n_seeds} seeds = {total_runs} runs")
+
+    failures: list[tuple[str, int, int]] = []
 
     for name in ablations:
         config_path = CONFIGS_DIR / f"{name}.yaml"
@@ -122,14 +126,27 @@ def main() -> None:
             continue
 
         print(f"\n=== Ablation: {name} ===")
-        for i in range(N_SEEDS):
+        for i in range(n_seeds):
             seed = BASE_SEED + i
-            run_ablation(name, seed, dry_run=args.dry_run)
+            try:
+                rc = run_ablation(name, seed, dry_run=args.dry_run)
+                if rc != 0:
+                    print(f"  FAILED {name} seed={seed} (exit code {rc})")
+                    failures.append((name, seed, rc))
+            except Exception as e:
+                print(f"  ERROR {name} seed={seed}: {e}")
+                failures.append((name, seed, -1))
 
         if not args.dry_run:
             results = collect_results(name)
             results["status"] = "completed"
             save_results(name, results)
+
+    if failures:
+        print(f"\n{len(failures)} run(s) failed:")
+        for name, seed, rc in failures:
+            print(f"  {name} seed={seed} exit_code={rc}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

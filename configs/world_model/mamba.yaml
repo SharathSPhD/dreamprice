@@ -7,3 +7,8 @@ obs_dim: 64
 act_dim: 25   # n_skus
 n_reward_heads: 5
 dropout: 0.1
+encoder: "entity"      # "entity" (default) or "flat"
+backbone: "mamba"      # "mamba" (default) or "gru"
+use_symlog: true       # symlog transform on inputs/targets
+use_twohot: true       # twohot categorical loss (vs raw MSE)
+kl_scale: 1.0          # KL loss scale (0.0 disables stochastic latent)

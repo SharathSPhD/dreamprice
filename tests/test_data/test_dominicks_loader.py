@@ -1,7 +1,6 @@
 """Tests for Dominick's data loader."""
 
 import pandas as pd
-import pytest
 
 from retail_world_model.data.dominicks_loader import (
     load_category,

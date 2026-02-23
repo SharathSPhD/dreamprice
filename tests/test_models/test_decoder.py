@@ -1,7 +1,7 @@
 """Tests for CausalDemandDecoder — theta must stay FROZEN."""
 
-import torch
 import pytest
+import torch
 
 from retail_world_model.models.decoder import CausalDemandDecoder
 

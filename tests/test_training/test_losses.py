@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-import torch
 import pytest
+import torch
 
+from retail_world_model.inference.imagination import compute_lambda_returns
 from retail_world_model.training.losses import (
+    FREE_BITS,
+    continue_bce_loss,
     kl_balancing,
     twohot_ce_loss,
-    continue_bce_loss,
-    _categorical_kl,
-    BETA_DYN,
-    BETA_REP,
-    FREE_BITS,
 )
-from retail_world_model.training.offline_utils import mopo_lcb, PercentileReturnNorm
-from retail_world_model.inference.imagination import compute_lambda_returns
+from retail_world_model.training.offline_utils import PercentileReturnNorm, mopo_lcb
 from retail_world_model.utils.twohot import make_bins
 
 

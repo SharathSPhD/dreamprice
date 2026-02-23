@@ -84,6 +84,9 @@ def main(cfg: DictConfig) -> None:
     trainer_cfg = OmegaConf.to_container(cfg.agent, resolve=True)
     trainer_cfg["save_every"] = cfg.get("save_every", 10000)
     trainer_cfg["checkpoint_dir"] = cfg.get("checkpoint_dir", "checkpoints")
+    # Pass world model ablation flags so trainer can adjust behavior
+    trainer_cfg["use_symlog"] = wm_cfg.get("use_symlog", True)
+    trainer_cfg["use_twohot"] = wm_cfg.get("use_twohot", True)
     trainer = DreamerTrainer(
         model=model,
         actor_critic=ac,
