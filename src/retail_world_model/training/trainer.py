@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -36,12 +37,14 @@ class DreamerTrainer:
         dataset: torch.utils.data.Dataset,
         cfg: dict[str, Any] | None = None,
         logger: MetricsLogger | None = None,
+        sampler: torch.utils.data.Sampler | None = None,
     ) -> None:
         self.model = model
         self.actor_critic = actor_critic
         self.dataset = dataset
         self.logger: MetricsLogger = logger or NullLogger()
         self.cfg = cfg or {}
+        self._sampler = sampler
 
         # Hyperparameters
         lr_wm = self.cfg.get("lr_wm", 1e-4)
@@ -187,6 +190,13 @@ class DreamerTrainer:
 
     def train_step(self, batch: dict[str, torch.Tensor]) -> dict[str, float]:
         """Execute all three phases on one batch."""
+        # Move batch to model device
+        device = next(self.model.parameters()).device
+        batch = {
+            k: v.to(device) if isinstance(v, torch.Tensor) else v
+            for k, v in batch.items()
+        }
+
         metrics: dict[str, float] = {}
 
         # Phase A: world model
@@ -214,15 +224,25 @@ class DreamerTrainer:
 
     def train(self, n_steps: int = 100_000) -> None:
         """Full training loop."""
-        loader = torch.utils.data.DataLoader(
-            self.dataset,
-            batch_size=self.cfg.get("batch_size", 32),
-            shuffle=True,
-            drop_last=True,
-        )
+        if self._sampler is not None:
+            loader = torch.utils.data.DataLoader(
+                self.dataset,
+                batch_size=self.cfg.get("batch_size", 32),
+                sampler=self._sampler,
+                drop_last=True,
+                num_workers=0,
+            )
+        else:
+            loader = torch.utils.data.DataLoader(
+                self.dataset,
+                batch_size=self.cfg.get("batch_size", 32),
+                shuffle=True,
+                drop_last=True,
+                num_workers=0,
+            )
         loader_iter = iter(loader)
 
-        for _ in range(n_steps):
+        for step_i in range(n_steps):
             try:
                 batch = next(loader_iter)
             except StopIteration:
@@ -230,6 +250,22 @@ class DreamerTrainer:
                 batch = next(loader_iter)
 
             self.train_step(batch)
+
+            # Checkpoint saving
+            if (step_i + 1) % self.cfg.get("save_every", 10000) == 0:
+                ckpt_dir = Path(self.cfg.get("checkpoint_dir", "checkpoints"))
+                ckpt_dir.mkdir(parents=True, exist_ok=True)
+                torch.save(
+                    {
+                        "step": self._step,
+                        "model": self.model.state_dict(),
+                        "actor_critic": self.actor_critic.state_dict(),
+                        "opt_wm": self.opt_wm.state_dict(),
+                        "opt_actor": self.opt_actor.state_dict(),
+                        "opt_critic": self.opt_critic.state_dict(),
+                    },
+                    ckpt_dir / f"step_{self._step:07d}.pt",
+                )
 
 
 def _copy_module(module: nn.Module) -> nn.Module:
