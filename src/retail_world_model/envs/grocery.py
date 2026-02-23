@@ -76,9 +76,9 @@ class GroceryPricingEnv(BaseGroceryEnv):
 
         # Reset world model state
         if hasattr(self.world_model, "reset_state"):
-            state = self.world_model.reset_state()
-            self._h_t = state.get("h", None)
-            self._z_t = state.get("z", None)
+            state = self.world_model.reset_state(batch_size=1)
+            self._h_t = state["h"]
+            self._z_t = state["z"]
 
         return self._get_obs(), {}
 
@@ -122,15 +122,23 @@ class GroceryPricingEnv(BaseGroceryEnv):
             units = base_demand * np.exp(-2.5 * log_price)
             return np.clip(units, 0, None).astype(np.float32)
 
-        # Use world model step if available
         with torch.no_grad():
             a_t = torch.tensor(action, dtype=torch.float32).unsqueeze(0)
-            if hasattr(self.world_model, "imagine_step") and self._h_t is not None:
-                result = self.world_model.imagine_step(self._z_t, a_t, self._h_t)
+            device = next(self.world_model.parameters()).device
+            a_t = a_t.to(device)
+
+            if self._z_t is not None:
+                result = self.world_model.imagine_step(
+                    self._z_t, a_t
+                )
                 self._h_t = result["h"]
                 self._z_t = result["z"]
-                demand = result.get("demand", result.get("r_mean", torch.ones(self.n_skus)))
-                return demand.squeeze(0).numpy()
+                r_mean = result["r_mean"]
+                mean_margin = float(np.mean(
+                    np.clip(prices - self.cost_vector, 0.01, None)
+                ))
+                demand = (r_mean / mean_margin).clamp(min=0).squeeze(0)
+                return demand.cpu().numpy().astype(np.float32)
 
         # Fallback
         return np.full(self.n_skus, 50.0, dtype=np.float32)

@@ -15,9 +15,13 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
 
-    import wandb
-
     from retail_world_model.applications.pricing_policy import ActorCritic
+    from retail_world_model.data.dataset import (
+        DominicksSequenceDataset,
+        HybridReplaySampler,
+    )
+    from retail_world_model.data.dominicks_loader import load_category
+    from retail_world_model.models.world_model import MambaWorldModel
     from retail_world_model.training.trainer import DreamerTrainer
     from retail_world_model.utils.logging import NullLogger, WandbLogger
 
@@ -38,11 +42,63 @@ def main(cfg: DictConfig) -> None:
     else:
         logger = NullLogger()
 
-    # Build model (requires world model module to be implemented)
-    # from retail_world_model.models.builder import WorldModelBuilder
-    # model = WorldModelBuilder(cfg.world_model).build().to(device)
-    print("Training script ready. World model builder required for full training.")
-    print(f"Config:\n{OmegaConf.to_yaml(cfg)}")
+    # Build dataset
+    data_dir = cfg.get("data_dir", "docs/data")
+    category = cfg.get("category", "cso")
+    df = load_category(
+        f"{data_dir}/{category}/w{category}.csv",
+        f"{data_dir}/{category}/upc{category}.csv",
+        f"{data_dir}/{category}/demo.csv",
+    )
+
+    seq_len = cfg.agent.seq_len
+    n_skus = cfg.environment.n_skus
+    dataset = DominicksSequenceDataset(
+        df, seq_len=seq_len, n_skus=n_skus
+    )
+    sampler = HybridReplaySampler(
+        dataset, batch_size=cfg.agent.batch_size
+    )
+
+    # Build model
+    wm_cfg = cfg.world_model
+    model = MambaWorldModel(
+        obs_dim=dataset.obs_dim,
+        act_dim=n_skus,
+        d_model=wm_cfg.d_model,
+        n_cat=wm_cfg.n_cat,
+        n_cls=wm_cfg.n_cls,
+        elasticity_path=f"configs/elasticities/{category}.json",
+    ).to(device)
+
+    # Build actor-critic
+    state_dim = wm_cfg.d_model + wm_cfg.z_dim
+    ac = ActorCritic(
+        state_dim=state_dim,
+        n_skus=n_skus,
+        action_dim=cfg.environment.action_steps,
+        eta=cfg.agent.eta,
+    ).to(device)
+
+    # Build trainer
+    trainer_cfg = OmegaConf.to_container(cfg.agent, resolve=True)
+    trainer_cfg["save_every"] = cfg.get("save_every", 10000)
+    trainer_cfg["checkpoint_dir"] = cfg.get("checkpoint_dir", "checkpoints")
+    trainer = DreamerTrainer(
+        model=model,
+        actor_critic=ac,
+        dataset=dataset,
+        cfg=trainer_cfg,
+        logger=logger,
+        sampler=sampler,
+    )
+
+    # Train
+    n_steps = cfg.get("n_steps", 100000)
+    print(f"Starting training for {n_steps} steps on {device}")
+    print(f"Dataset: {len(dataset)} sequences, obs_dim={dataset.obs_dim}")
+    trainer.train(n_steps=n_steps)
+    print("Training complete.")
 
 
 if __name__ == "__main__":
