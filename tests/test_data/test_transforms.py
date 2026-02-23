@@ -2,11 +2,14 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from retail_world_model.data.transforms import (
+    compute_discount_depth,
     compute_hausman_iv,
-    compute_unit_price,
+    compute_lag_features,
+    compute_price_index,
+    compute_rolling_features,
+    compute_temporal_features,
     flag_promotions,
     symexp,
     symlog,
@@ -115,6 +118,7 @@ class TestFlagPromotions:
         # 10 rows at modal price 2.00, 2 rows at 1.80 (< 0.95 * 2.00 = 1.90)
         df = pd.DataFrame(
             {
+                "STORE": [1] * 12,
                 "UPC": [1] * 12,
                 "PRICE": [2.0] * 10 + [1.80, 1.80],
                 "QTY": [1] * 12,
@@ -131,6 +135,7 @@ class TestFlagPromotions:
     def test_not_flagged_at_modal(self):
         df = pd.DataFrame(
             {
+                "STORE": [1] * 5,
                 "UPC": [1] * 5,
                 "PRICE": [2.0] * 5,
                 "QTY": [1] * 5,
@@ -139,3 +144,56 @@ class TestFlagPromotions:
         )
         promo = flag_promotions(df)
         assert not promo.any()
+
+
+class TestDiscountDepth:
+    def test_zero_at_modal(self, clean_movement_df):
+        dd = compute_discount_depth(clean_movement_df)
+        assert (dd >= 0).all()
+
+    def test_positive_on_sale(self):
+        df = pd.DataFrame(
+            {
+                "STORE": [1, 1, 1],
+                "UPC": [10, 10, 10],
+                "PRICE": [3.0, 3.0, 2.0],
+                "QTY": [1, 1, 1],
+            }
+        )
+        dd = compute_discount_depth(df)
+        assert dd.iloc[2] > 0
+
+
+class TestLagFeatures:
+    def test_lag_shape(self, clean_movement_df):
+        lags = compute_lag_features(clean_movement_df, ["STORE", "UPC"], "MOVE", [1, 2])
+        assert lags.shape[0] == len(clean_movement_df)
+        assert "MOVE_lag_1" in lags.columns
+        assert "MOVE_lag_2" in lags.columns
+
+
+class TestRollingFeatures:
+    def test_rolling_shape(self, clean_movement_df):
+        rolling = compute_rolling_features(clean_movement_df, ["STORE", "UPC"], "MOVE", 4)
+        assert "MOVE_rolling_mean_4" in rolling.columns
+        assert "MOVE_rolling_std_4" in rolling.columns
+
+
+class TestPriceIndex:
+    def test_mean_is_one(self, clean_movement_df):
+        pi = compute_price_index(clean_movement_df)
+        assert abs(pi.mean() - 1.0) < 0.5
+
+
+class TestTemporalFeatures:
+    def test_columns(self, clean_movement_df):
+        tf = compute_temporal_features(clean_movement_df)
+        assert "week_sin" in tf.columns
+        assert "week_cos" in tf.columns
+        assert "quarter_0" in tf.columns
+        assert "holiday" in tf.columns
+
+    def test_sin_cos_range(self, clean_movement_df):
+        tf = compute_temporal_features(clean_movement_df)
+        assert tf["week_sin"].between(-1, 1).all()
+        assert tf["week_cos"].between(-1, 1).all()
