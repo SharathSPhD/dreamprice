@@ -1,0 +1,43 @@
+services:
+  dreamprice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dreamprice:latest
+    container_name: dreamprice
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+    volumes:
+      - .:/workspace
+      - pip-cache:/root/.cache/pip
+      - site-packages:/usr/local/lib/python3.12/dist-packages
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - WANDB_PROJECT=dreamprice
+      - PYTHONPATH=/workspace/src
+    ipc: host
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      stack:
+        soft: 67108864
+        hard: 67108864
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  pip-cache:
+  site-packages:

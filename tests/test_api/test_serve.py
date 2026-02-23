@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
@@ -18,7 +17,6 @@ async def client():
             yield c
 
 
-@pytest.mark.asyncio
 async def test_health_returns_200(client: AsyncClient):
     resp = await client.get("/health")
     assert resp.status_code == 200
@@ -28,7 +26,6 @@ async def test_health_returns_200(client: AsyncClient):
     assert data["device"] == "cpu"
 
 
-@pytest.mark.asyncio
 async def test_model_info(client: AsyncClient):
     resp = await client.get("/model/info")
     assert resp.status_code == 200
@@ -37,7 +34,6 @@ async def test_model_info(client: AsyncClient):
     assert "cso" in data["categories"]
 
 
-@pytest.mark.asyncio
 async def test_recommend_returns_valid_response(client: AsyncClient):
     payload = {
         "store_id": 1,
@@ -55,7 +51,6 @@ async def test_recommend_returns_valid_response(client: AsyncClient):
     assert len(data["uncertainty_bounds"]) == 2
 
 
-@pytest.mark.asyncio
 async def test_imagine_returns_valid_response(client: AsyncClient):
     payload = {
         "store_id": 1,
@@ -70,7 +65,6 @@ async def test_imagine_returns_valid_response(client: AsyncClient):
     assert isinstance(data["expected_profit"], float)
 
 
-@pytest.mark.asyncio
 async def test_stream_returns_sse(client: AsyncClient):
     payload = {
         "store_id": 1,
@@ -81,12 +75,9 @@ async def test_stream_returns_sse(client: AsyncClient):
     }
     resp = await client.post("/stream", json=payload)
     assert resp.status_code == 200
-    # SSE responses have text/event-stream content type.
     assert "text/event-stream" in resp.headers["content-type"]
 
 
-@pytest.mark.asyncio
 async def test_recommend_validates_input(client: AsyncClient):
-    # Missing required fields.
     resp = await client.post("/recommend", json={"store_id": 1})
     assert resp.status_code == 422
