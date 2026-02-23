@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from retail_world_model.envs.grocery import GroceryPricingEnv, PRICE_MULTIPLIERS
+from retail_world_model.envs.grocery import PRICE_MULTIPLIERS, GroceryPricingEnv
 
 
 @pytest.fixture

@@ -1,15 +1,14 @@
 """Tests for distribution utilities."""
 
 import torch
-import pytest
 
 from retail_world_model.utils.distributions import (
-    symlog,
-    symexp,
     apply_unimix,
     sample_straight_through,
-    twohot_encode,
+    symexp,
+    symlog,
     twohot_decode,
+    twohot_encode,
 )
 
 
