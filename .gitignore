@@ -53,6 +53,9 @@ checkpoints/
 # Claude Code local settings (per-user, not shared)
 .claude/settings.local.json
 
+# Git worktrees
+.worktrees/
+
 # Data (raw data stays in docs/data, processed is generated)
 data/processed/
 data/raw/
