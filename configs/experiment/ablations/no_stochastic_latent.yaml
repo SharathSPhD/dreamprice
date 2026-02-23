@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - override /experiment: main
+
+ablation_name: "no_stochastic_latent"
+world_model:
+  n_cat: 1
+  n_cls: 1  # effectively deterministic
+  kl_scale: 0.0
