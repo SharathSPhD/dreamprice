@@ -75,6 +75,15 @@ class RSSM(nn.Module):
             nn.Linear(d_model, 1),
         )
 
+        # Observation decoder: reconstruct obs from latent + backbone state
+        self.obs_decoder = nn.Sequential(
+            nn.Linear(d_model + latent_dim, d_model),
+            nn.SiLU(),
+            nn.Linear(d_model, d_model),
+            nn.SiLU(),
+            nn.Linear(d_model, obs_dim),
+        )
+
     def encode_obs(self, x_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode observation into stochastic latent.
 
@@ -153,15 +162,24 @@ class RSSM(nn.Module):
         r_mean = r_mean.reshape(B, T)
         r_std = r_std.reshape(B, T)
 
+        # Reward logits for twohot loss
+        r_logits = self.reward_ensemble.forward_logits(h_flat)  # (n_heads, B*T, n_bins)
+        r_logits_mean = r_logits.mean(dim=0).reshape(B, T, -1)  # (B, T, n_bins)
+
         # Continue predictions
         continue_logits = self.continue_head(h_BT).squeeze(-1)  # (B, T)
 
+        # Observation reconstruction
+        x_recon_BT = self.obs_decoder(torch.cat([h_BT, z_BT], dim=-1))
+
         return {
-            "z_BT": z_BT,
+            "z_posterior_BT": z_BT,
             "h_BT": h_BT,
-            "posterior_probs": posterior_probs,
-            "prior_probs": prior_probs,
+            "posterior_probs_BT": posterior_probs,
+            "prior_probs_BT": prior_probs,
+            "x_recon_BT": x_recon_BT,
             "reward_mean": r_mean,
             "reward_std": r_std,
+            "reward_logits_BT": r_logits_mean,
             "continue_logits": continue_logits,
         }

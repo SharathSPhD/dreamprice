@@ -67,6 +67,7 @@ class MambaBackbone(nn.Module):
                 headdim=headdim,
                 chunk_size=chunk_size,
                 rmsnorm=True,
+                layer_idx=0,
             )
         else:
             self.mamba = GRUFallback(d_model)
@@ -81,7 +82,8 @@ class MambaBackbone(nn.Module):
         """x_t: (B, d_model) -> (B, d_model). Recurrent inference mode."""
         if self._use_mamba:
             # Mamba2 step expects (B, 1, d_model) and returns (B, 1, d_model)
-            out = self.mamba(x_t.unsqueeze(1), inference_params=inference_params)
+            # .contiguous() ensures strides are aligned for causal_conv1d
+            out = self.mamba(x_t.unsqueeze(1).contiguous(), inference_params=inference_params)
             return out.squeeze(1)
         else:
             return self.mamba.step(x_t, inference_params)
