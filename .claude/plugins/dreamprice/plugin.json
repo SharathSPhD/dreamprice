@@ -1,0 +1,49 @@
+{
+  "name": "dreamprice",
+  "version": "0.1.0",
+  "description": "DreamPrice project plugin — custom agents, hooks, and skills for the DreamPrice world model build",
+  "agents": [
+    {
+      "name": "causal-estimator",
+      "description": "Estimates per-category price elasticities via DML-PLIV and validates Hausman instruments. Outputs frozen elasticity configs for CausalDemandDecoder.",
+      "file": "agents/causal-estimator.md"
+    },
+    {
+      "name": "experiment-tracker",
+      "description": "Manages W&B ablation sweeps, collects run results, computes IQM + 95% bootstrap CIs, and produces statistical summary tables.",
+      "file": "agents/experiment-tracker.md"
+    }
+  ],
+  "hooks": [
+    {
+      "name": "ruff-guard",
+      "event": "PostToolUse",
+      "tools": ["Write", "Edit"],
+      "file": "hooks/ruff-guard.sh"
+    },
+    {
+      "name": "pyright-guard",
+      "event": "PostToolUse",
+      "tools": ["Write", "Edit"],
+      "file": "hooks/pyright-guard.sh"
+    },
+    {
+      "name": "pytest-guard",
+      "event": "PostToolUse",
+      "tools": ["Write", "Edit"],
+      "file": "hooks/pytest-guard.sh"
+    },
+    {
+      "name": "blueprint-path-guard",
+      "event": "PreToolUse",
+      "tools": ["Write"],
+      "file": "hooks/blueprint-path-guard.sh"
+    }
+  ],
+  "skills": [
+    {
+      "name": "dreamprice-context",
+      "file": "skills/dreamprice-context.md"
+    }
+  ]
+}

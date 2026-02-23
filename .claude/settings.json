@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/sharaths/projects/dreamprice/.claude/hooks/task-gate.sh"
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/sharaths/projects/dreamprice/.claude/hooks/idle-check.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "WANDB_PROJECT": "dreamprice"
+  }
+}
