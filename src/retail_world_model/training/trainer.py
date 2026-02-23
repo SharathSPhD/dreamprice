@@ -61,10 +61,12 @@ class DreamerTrainer:
         # Optimizers
         self.opt_wm = torch.optim.Adam(model.parameters(), lr=lr_wm)
         self.opt_actor = torch.optim.Adam(
-            actor_critic.actor.parameters(), lr=lr_actor  # type: ignore[union-attr]
+            actor_critic.actor.parameters(),
+            lr=lr_actor,  # type: ignore[union-attr]
         )
         self.opt_critic = torch.optim.Adam(
-            actor_critic.critic.parameters(), lr=lr_critic  # type: ignore[union-attr]
+            actor_critic.critic.parameters(),
+            lr=lr_critic,  # type: ignore[union-attr]
         )
 
         # Slow critic (EMA target)
@@ -88,16 +90,18 @@ class DreamerTrainer:
 
         return {k: v.item() for k, v in losses.items()}
 
-    def train_phase_b(
-        self, z0: torch.Tensor, h0: torch.Tensor
-    ) -> dict[str, float]:
+    def train_phase_b(self, z0: torch.Tensor, h0: torch.Tensor) -> dict[str, float]:
         """Phase B: actor imagination update."""
         self.opt_actor.zero_grad()
 
         # Rollout in imagination
         rollout = rollout_imagination(
-            self.model, z0, h0, self.actor_critic,
-            H=self.H, lambda_lcb=self.lambda_lcb,
+            self.model,
+            z0,
+            h0,
+            self.actor_critic,
+            H=self.H,
+            lambda_lcb=self.lambda_lcb,
         )
 
         # Compute lambda-returns
@@ -132,17 +136,19 @@ class DreamerTrainer:
             "return_mean": returns.mean().item(),
         }
 
-    def train_phase_c(
-        self, z0: torch.Tensor, h0: torch.Tensor
-    ) -> dict[str, float]:
+    def train_phase_c(self, z0: torch.Tensor, h0: torch.Tensor) -> dict[str, float]:
         """Phase C: critic update with twohot distributional regression."""
         self.opt_critic.zero_grad()
 
         # Rollout (reuse or recompute)
         with torch.no_grad():
             rollout = rollout_imagination(
-                self.model, z0, h0, self.actor_critic,
-                H=self.H, lambda_lcb=self.lambda_lcb,
+                self.model,
+                z0,
+                h0,
+                self.actor_critic,
+                H=self.H,
+                lambda_lcb=self.lambda_lcb,
             )
             targets = compute_lambda_returns(
                 rollout["rewards_pessimistic"],
@@ -192,10 +198,7 @@ class DreamerTrainer:
         """Execute all three phases on one batch."""
         # Move batch to model device
         device = next(self.model.parameters()).device
-        batch = {
-            k: v.to(device) if isinstance(v, torch.Tensor) else v
-            for k, v in batch.items()
-        }
+        batch = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
 
         metrics: dict[str, float] = {}
 

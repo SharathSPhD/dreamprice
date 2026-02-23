@@ -49,14 +49,10 @@ class MambaWorldModel(nn.Module):
 
     def reset_state(self, batch_size: int = 1) -> dict[str, torch.Tensor]:
         """Initialize recurrent state for imagination rollout."""
-        self._inference_params = self.rssm.backbone.init_inference_params(
-            batch_size
-        )
+        self._inference_params = self.rssm.backbone.init_inference_params(batch_size)
         device = next(self.parameters()).device
         h = torch.zeros(batch_size, self.rssm.d_model, device=device)
-        z = torch.zeros(
-            batch_size, self.rssm.n_cat * self.rssm.n_cls, device=device
-        )
+        z = torch.zeros(batch_size, self.rssm.n_cat * self.rssm.n_cls, device=device)
         return {"h": h, "z": z}
 
     def imagine_step(
@@ -75,13 +71,9 @@ class MambaWorldModel(nn.Module):
         Returns:
             Dict with keys: h, z, r_mean, r_std, continue, prior_probs.
         """
-        h_next, z_next, prior_probs = self.rssm.imagine_step(
-            z_t, a_t, self._inference_params
-        )
+        h_next, z_next, prior_probs = self.rssm.imagine_step(z_t, a_t, self._inference_params)
         r_mean, r_std = self.rssm.reward_ensemble(h_next)
-        cont = torch.sigmoid(
-            self.rssm.continue_head(h_next).squeeze(-1)
-        )
+        cont = torch.sigmoid(self.rssm.continue_head(h_next).squeeze(-1))
         return {
             "h": h_next,
             "z": z_next,
@@ -131,9 +123,9 @@ class MambaWorldModel(nn.Module):
             r_std_list.append(r_std)
 
         return {
-            "h_seq": torch.stack(h_list, dim=1),        # (B, H, d_model)
-            "z_seq": torch.stack(z_list, dim=1),         # (B, H, latent_dim)
+            "h_seq": torch.stack(h_list, dim=1),  # (B, H, d_model)
+            "z_seq": torch.stack(z_list, dim=1),  # (B, H, latent_dim)
             "prior_probs_seq": torch.stack(prior_probs_list, dim=1),
             "r_mean_seq": torch.stack(r_mean_list, dim=1),  # (B, H)
-            "r_std_seq": torch.stack(r_std_list, dim=1),     # (B, H)
+            "r_std_seq": torch.stack(r_std_list, dim=1),  # (B, H)
         }

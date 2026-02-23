@@ -29,8 +29,9 @@ class TestCausalDemandDecoder:
         loss.backward()
         opt.step()
 
-        assert torch.allclose(decoder.theta.weight.data, theta_before), \
+        assert torch.allclose(decoder.theta.weight.data, theta_before), (
             "theta must ALWAYS be frozen (requires_grad=False)"
+        )
 
     def test_theta_requires_grad_false(self, decoder):
         assert not decoder.theta.weight.requires_grad
@@ -61,5 +62,6 @@ class TestCausalDemandDecoder:
         demand_high = decoder(z, high_price, cat_id, store_feat)
 
         # With theta = -2.5, higher log_price should produce lower demand
-        assert (demand_high < demand_low).all(), \
+        assert (demand_high < demand_low).all(), (
             "Negative elasticity means higher price -> lower demand"
+        )

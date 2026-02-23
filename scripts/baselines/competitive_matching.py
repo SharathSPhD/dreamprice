@@ -81,8 +81,11 @@ def main() -> None:
         wandb.init(project="dreamprice", group="baselines", name="competitive-matching")
 
     metrics = run_competitive_matching(
-        category_avg, cost_vector, demand_fn,
-        n_episodes=args.n_episodes, seed=args.seed,
+        category_avg,
+        cost_vector,
+        demand_fn,
+        n_episodes=args.n_episodes,
+        seed=args.seed,
     )
     print(f"Competitive matching: profit/step={metrics['profit_per_step']:.2f}")
 

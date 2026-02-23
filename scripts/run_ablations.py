@@ -35,9 +35,7 @@ N_SEEDS = 5
 BASE_SEED = 42
 
 RESULTS_DIR = Path(__file__).resolve().parent.parent / "docs" / "results" / "ablations"
-CONFIGS_DIR = (
-    Path(__file__).resolve().parent.parent / "configs" / "experiment" / "ablations"
-)
+CONFIGS_DIR = Path(__file__).resolve().parent.parent / "configs" / "experiment" / "ablations"
 
 
 def run_ablation(name: str, seed: int, dry_run: bool = False) -> int:

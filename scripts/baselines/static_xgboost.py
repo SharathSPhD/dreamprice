@@ -62,6 +62,7 @@ def optimize_price(
     Returns:
         (optimal_price, expected_profit).
     """
+
     def neg_profit(price: float) -> float:
         features = base_features.copy()
         features[price_idx] = price

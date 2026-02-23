@@ -15,18 +15,25 @@ class TestTrainerIntegration:
         obs_dim, act_dim = 32, 4
         d_model, n_cat, n_cls = 64, 8, 8
         model = MambaWorldModel(
-            obs_dim=obs_dim, act_dim=act_dim,
-            d_model=d_model, n_cat=n_cat, n_cls=n_cls,
+            obs_dim=obs_dim,
+            act_dim=act_dim,
+            d_model=d_model,
+            n_cat=n_cat,
+            n_cls=n_cls,
         )
         state_dim = d_model + n_cat * n_cls
         ac = ActorCritic(
-            state_dim=state_dim, n_skus=act_dim, action_dim=21,
+            state_dim=state_dim,
+            n_skus=act_dim,
+            action_dim=21,
         )
         dataset = torch.utils.data.TensorDataset(
             torch.randn(10, 8, obs_dim),
         )
         return DreamerTrainer(
-            model=model, actor_critic=ac, dataset=dataset,
+            model=model,
+            actor_critic=ac,
+            dataset=dataset,
         )
 
     def test_train_step_completes(self, trainer):

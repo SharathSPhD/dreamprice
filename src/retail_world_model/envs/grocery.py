@@ -128,15 +128,11 @@ class GroceryPricingEnv(BaseGroceryEnv):
             a_t = a_t.to(device)
 
             if self._z_t is not None:
-                result = self.world_model.imagine_step(
-                    self._z_t, a_t
-                )
+                result = self.world_model.imagine_step(self._z_t, a_t)
                 self._h_t = result["h"]
                 self._z_t = result["z"]
                 r_mean = result["r_mean"]
-                mean_margin = float(np.mean(
-                    np.clip(prices - self.cost_vector, 0.01, None)
-                ))
+                mean_margin = float(np.mean(np.clip(prices - self.cost_vector, 0.01, None)))
                 demand = (r_mean / mean_margin).clamp(min=0).squeeze(0)
                 return demand.cpu().numpy().astype(np.float32)
 

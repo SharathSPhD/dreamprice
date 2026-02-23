@@ -89,8 +89,12 @@ def main() -> None:
     margins = [0.15, 0.20, 0.25, 0.30]
     for margin in margins:
         metrics = run_cost_plus(
-            cost_vector, demand_fn, margin,
-            n_episodes=args.n_episodes, H=args.H, seed=args.seed,
+            cost_vector,
+            demand_fn,
+            margin,
+            n_episodes=args.n_episodes,
+            H=args.H,
+            seed=args.seed,
         )
         print(f"Margin {margin:.0%}: profit/step={metrics['profit_per_step']:.2f}")
         if args.use_wandb and HAS_WANDB:

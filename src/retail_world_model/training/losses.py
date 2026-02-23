@@ -127,14 +127,10 @@ def elbo_loss(
     recon_loss = 0.5 * (x_recon - x_target).pow(2).sum(dim=-1).mean()
 
     # Reward loss: twohot CE
-    reward_loss = twohot_ce_loss(
-        output["reward_logits_BT"], batch["r_BT"]
-    )
+    reward_loss = twohot_ce_loss(output["reward_logits_BT"], batch["r_BT"])
 
     # Continue loss: BCE
-    cont_loss = continue_bce_loss(
-        output["continue_logits"], batch["done_BT"]
-    )
+    cont_loss = continue_bce_loss(output["continue_logits"], batch["done_BT"])
 
     # KL balancing
     kl_total, kl_dyn, kl_rep = kl_balancing(

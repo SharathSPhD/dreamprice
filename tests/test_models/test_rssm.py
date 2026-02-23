@@ -25,8 +25,11 @@ class TestRSSM:
     @pytest.fixture
     def rssm(self):
         return RSSM(
-            obs_dim=_OBS_DIM, act_dim=_ACT_DIM, d_model=_D_MODEL,
-            n_cat=_N_CAT, n_cls=_N_CLS,
+            obs_dim=_OBS_DIM,
+            act_dim=_ACT_DIM,
+            d_model=_D_MODEL,
+            n_cat=_N_CAT,
+            n_cls=_N_CLS,
         ).to(_device)
 
     def test_no_h_in_posterior(self, rssm):
@@ -80,8 +83,11 @@ class TestRSSM:
         from retail_world_model.training.losses import elbo_loss
 
         model = MambaWorldModel(
-            obs_dim=_OBS_DIM, act_dim=_ACT_DIM, d_model=_D_MODEL,
-            n_cat=_N_CAT, n_cls=_N_CLS,
+            obs_dim=_OBS_DIM,
+            act_dim=_ACT_DIM,
+            d_model=_D_MODEL,
+            n_cat=_N_CAT,
+            n_cls=_N_CLS,
         ).to(_device)
         losses = elbo_loss(batch, model)
         assert torch.isfinite(losses["total"])
@@ -92,8 +98,11 @@ class TestMambaWorldModel:
     @pytest.fixture
     def model(self):
         return MambaWorldModel(
-            obs_dim=_OBS_DIM, act_dim=_ACT_DIM, d_model=_D_MODEL,
-            n_cat=_N_CAT, n_cls=_N_CLS,
+            obs_dim=_OBS_DIM,
+            act_dim=_ACT_DIM,
+            d_model=_D_MODEL,
+            n_cat=_N_CAT,
+            n_cls=_N_CLS,
         ).to(_device)
 
     def test_forward_shapes(self, model):

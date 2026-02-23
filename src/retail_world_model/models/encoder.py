@@ -74,14 +74,14 @@ class EntityEncoder(nn.Module):
             parts.append(self.month_embed(month_ids))
         else:
             # Default zero for month embedding
-            parts.append(torch.zeros(
-                *upc_ids.shape, 6, device=upc_ids.device, dtype=continuous_feats.dtype
-            ))
+            parts.append(
+                torch.zeros(*upc_ids.shape, 6, device=upc_ids.device, dtype=continuous_feats.dtype)
+            )
         # Brand ID not always available; caller should provide or we skip
         cont = self.continuous_proj(symlog(continuous_feats))
         parts.append(cont)
         # Pad brand embed to zero if not provided via forward signature
-        parts.insert(2, torch.zeros(
-            *upc_ids.shape, 16, device=upc_ids.device, dtype=continuous_feats.dtype
-        ))
+        parts.insert(
+            2, torch.zeros(*upc_ids.shape, 16, device=upc_ids.device, dtype=continuous_feats.dtype)
+        )
         return self.fusion(torch.cat(parts, dim=-1))

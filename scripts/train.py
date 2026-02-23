@@ -53,12 +53,8 @@ def main(cfg: DictConfig) -> None:
 
     seq_len = cfg.agent.seq_len
     n_skus = cfg.environment.n_skus
-    dataset = DominicksSequenceDataset(
-        df, seq_len=seq_len, n_skus=n_skus
-    )
-    sampler = HybridReplaySampler(
-        dataset, batch_size=cfg.agent.batch_size
-    )
+    dataset = DominicksSequenceDataset(df, seq_len=seq_len, n_skus=n_skus)
+    sampler = HybridReplaySampler(dataset, batch_size=cfg.agent.batch_size)
 
     # Build model
     wm_cfg = cfg.world_model

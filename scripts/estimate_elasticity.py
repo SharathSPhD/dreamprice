@@ -42,48 +42,40 @@ def estimate_elasticity(
     upc_path = Path(data_dir) / category / f"upc{category}.csv"
     demo_path = Path(data_dir) / "demo.csv"
 
-    df = load_category(
-        str(movement_path), str(upc_path), str(demo_path)
-    )
+    df = load_category(str(movement_path), str(upc_path), str(demo_path))
     train_df, _, _ = temporal_split(df)
 
     # Derived features
     train_df = train_df.copy()
     train_df["unit_price"] = compute_unit_price(train_df)
-    train_df["log_price"] = np.log(
-        train_df["unit_price"].clip(lower=1e-6)
-    )
-    train_df["log_move"] = np.log(
-        train_df["MOVE"].clip(lower=1) + 1
-    )
+    train_df["log_price"] = np.log(train_df["unit_price"].clip(lower=1e-6))
+    train_df["log_move"] = np.log(train_df["MOVE"].clip(lower=1) + 1)
     train_df["hausman_iv"] = compute_hausman_iv(train_df)
 
     # Drop rows with NaN/inf
     cols_needed = ["log_move", "log_price", "hausman_iv"]
-    train_df = train_df.replace(
-        [np.inf, -np.inf], np.nan
-    ).dropna(subset=cols_needed)
+    train_df = train_df.replace([np.inf, -np.inf], np.nan).dropna(subset=cols_needed)
 
     # Control variables (exogenous)
     exog_cols = []
     for col in [
-        "INCOME", "EDUC", "ETHNIC", "HSIZEAVG",
-        "SSTRDIST", "SSTRVOL",
+        "INCOME",
+        "EDUC",
+        "ETHNIC",
+        "HSIZEAVG",
+        "SSTRDIST",
+        "SSTRVOL",
     ]:
         if col in train_df.columns:
             exog_cols.append(col)
-            train_df[col] = train_df[col].fillna(
-                train_df[col].median()
-            )
+            train_df[col] = train_df[col].fillna(train_df[col].median())
 
     if not exog_cols:
         exog_cols = ["WEEK"]
 
     # DoubleML data object
     dml_data = DoubleMLData(
-        train_df[
-            ["log_move", "log_price", "hausman_iv"] + exog_cols
-        ],
+        train_df[["log_move", "log_price", "hausman_iv"] + exog_cols],
         y_col="log_move",
         d_cols="log_price",
         z_cols="hausman_iv",
@@ -91,15 +83,9 @@ def estimate_elasticity(
     )
 
     # ML learners
-    ml_l = RandomForestRegressor(
-        n_estimators=n_estimators, n_jobs=-1, random_state=42
-    )
-    ml_m = RandomForestRegressor(
-        n_estimators=n_estimators, n_jobs=-1, random_state=42
-    )
-    ml_r = RandomForestRegressor(
-        n_estimators=n_estimators, n_jobs=-1, random_state=42
-    )
+    ml_l = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, random_state=42)
+    ml_m = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, random_state=42)
+    ml_r = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, random_state=42)
 
     # Fit DML-PLIV
     dml = DoubleMLPLIV(dml_data, ml_l, ml_m, ml_r, n_folds=n_folds)
@@ -112,13 +98,10 @@ def estimate_elasticity(
     p_value = float(dml.pval[0])
 
     # First-stage F-stat approximation (t_stat^2 for single instrument)
-    f_stat = t_stat ** 2
+    f_stat = t_stat**2
 
     print(f"DML-PLIV elasticity: {theta:.4f} (SE={se:.4f})")
-    print(
-        f"95% CI: [{float(ci.iloc[0, 0]):.4f}, "
-        f"{float(ci.iloc[0, 1]):.4f}]"
-    )
+    print(f"95% CI: [{float(ci.iloc[0, 0]):.4f}, {float(ci.iloc[0, 1]):.4f}]")
     print(f"F-stat (approx): {f_stat:.1f}")
 
     if f_stat < 10:
@@ -134,10 +117,13 @@ def estimate_elasticity(
             train_df, "log_price", "log_move", "hausman_iv"
         )
         from sklearn.linear_model import LinearRegression
-        X_cope = np.column_stack([
-            train_df["log_price"].values,
-            copula_resid.values,
-        ])
+
+        X_cope = np.column_stack(
+            [
+                train_df["log_price"].values,
+                copula_resid.values,
+            ]
+        )
         y_cope = train_df["log_move"].values
         reg = LinearRegression().fit(X_cope, y_cope)
         cope_beta = float(reg.coef_[0])
@@ -175,11 +161,10 @@ def estimate_elasticity(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Estimate price elasticities"
-    )
+    parser = argparse.ArgumentParser(description="Estimate price elasticities")
     parser.add_argument(
-        "--category", default="cso",
+        "--category",
+        default="cso",
         help="Dominick's category code",
     )
     parser.add_argument("--data-dir", default="docs/data")

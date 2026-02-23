@@ -1,4 +1,5 @@
 """Tests for estimate_elasticity.py using synthetic data."""
+
 from __future__ import annotations
 
 import importlib
@@ -22,31 +23,29 @@ def make_synthetic_data(n_stores=5, n_skus=3, n_weeks=50):
                 qty = 1
                 move = max(
                     0,
-                    int(
-                        100
-                        * np.exp(-2.0 * np.log(price))
-                        * np.random.uniform(0.8, 1.2)
-                    ),
+                    int(100 * np.exp(-2.0 * np.log(price)) * np.random.uniform(0.8, 1.2)),
                 )
-                rows.append({
-                    "STORE": store,
-                    "UPC": upc,
-                    "WEEK": week,
-                    "PRICE": round(price, 2),
-                    "QTY": qty,
-                    "MOVE": move,
-                    "PROFIT": 25.0,
-                    "SALE": "",
-                    "OK": 1,
-                    "INCOME": 45000.0,
-                    "EDUC": 12.0,
-                    "ETHNIC": 0.3,
-                    "HSIZEAVG": 2.5,
-                    "SSTRDIST": 1.2,
-                    "SSTRVOL": 500.0,
-                    "CPDIST5": 3.0,
-                    "CPWVOL5": 200.0,
-                })
+                rows.append(
+                    {
+                        "STORE": store,
+                        "UPC": upc,
+                        "WEEK": week,
+                        "PRICE": round(price, 2),
+                        "QTY": qty,
+                        "MOVE": move,
+                        "PROFIT": 25.0,
+                        "SALE": "",
+                        "OK": 1,
+                        "INCOME": 45000.0,
+                        "EDUC": 12.0,
+                        "ETHNIC": 0.3,
+                        "HSIZEAVG": 2.5,
+                        "SSTRDIST": 1.2,
+                        "SSTRVOL": 500.0,
+                        "CPDIST5": 3.0,
+                        "CPWVOL5": 200.0,
+                    }
+                )
     return pd.DataFrame(rows)
 
 
@@ -66,9 +65,12 @@ class TestEstimateElasticity:
         df = make_synthetic_data()
 
         # Patch load_category and temporal_split to use synthetic data
-        with patch("scripts.estimate_elasticity.load_category", return_value=df), patch(
-            "scripts.estimate_elasticity.temporal_split",
-            return_value=(df, df.iloc[:10], df.iloc[:5]),
+        with (
+            patch("scripts.estimate_elasticity.load_category", return_value=df),
+            patch(
+                "scripts.estimate_elasticity.temporal_split",
+                return_value=(df, df.iloc[:10], df.iloc[:5]),
+            ),
         ):
             result = estimate_elasticity(
                 category="test",
@@ -92,9 +94,12 @@ class TestEstimateElasticity:
         df = make_synthetic_data()
         out_dir = tmp_path / "elasticities"
 
-        with patch("scripts.estimate_elasticity.load_category", return_value=df), patch(
-            "scripts.estimate_elasticity.temporal_split",
-            return_value=(df, df.iloc[:10], df.iloc[:5]),
+        with (
+            patch("scripts.estimate_elasticity.load_category", return_value=df),
+            patch(
+                "scripts.estimate_elasticity.temporal_split",
+                return_value=(df, df.iloc[:10], df.iloc[:5]),
+            ),
         ):
             estimate_elasticity(
                 category="test",

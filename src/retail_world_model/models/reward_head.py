@@ -23,14 +23,16 @@ class RewardEnsemble(nn.Module):
         self.n_heads = n_heads
         self.n_bins = n_bins
 
-        self.heads = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(d_model, d_model),
-                nn.SiLU(),
-                nn.Linear(d_model, n_bins),
-            )
-            for _ in range(n_heads)
-        ])
+        self.heads = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Linear(d_model, d_model),
+                    nn.SiLU(),
+                    nn.Linear(d_model, n_bins),
+                )
+                for _ in range(n_heads)
+            ]
+        )
 
         # 255 bins uniformly in symlog space [-20, +20]
         self.register_buffer("bins", torch.linspace(-20, 20, n_bins))
@@ -64,10 +66,10 @@ class RewardEnsemble(nn.Module):
         probs = torch.softmax(logits, dim=-1)
 
         # Decode each head to scalar
-        rewards = torch.stack([
-            twohot_decode(probs[i], self.bins) for i in range(self.n_heads)
-        ], dim=0)  # (n_heads, B)
+        rewards = torch.stack(
+            [twohot_decode(probs[i], self.bins) for i in range(self.n_heads)], dim=0
+        )  # (n_heads, B)
 
         r_mean = rewards.mean(dim=0)  # (B,)
-        r_std = rewards.std(dim=0)    # (B,)
+        r_std = rewards.std(dim=0)  # (B,)
         return r_mean, r_std

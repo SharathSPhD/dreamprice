@@ -45,7 +45,8 @@ class ContinuousActionWrapper(gym.Wrapper):
         n_actions = len(PRICE_MULTIPLIERS)
         indices = np.clip(
             ((action + 1.0) / 2.0 * (n_actions - 1)).astype(int),
-            0, n_actions - 1,
+            0,
+            n_actions - 1,
         )
         return self.env.step(indices)
 

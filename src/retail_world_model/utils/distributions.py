@@ -58,7 +58,7 @@ def twohot_encode(x: torch.Tensor, bins: torch.Tensor) -> torch.Tensor:
     k = k.clamp(0, len(bins) - 2)
 
     # Compute weights
-    b_low = bins[k]       # (...,)
+    b_low = bins[k]  # (...,)
     b_high = bins[k + 1]  # (...,)
     x_clamped = x_clamped.squeeze(-1)
 

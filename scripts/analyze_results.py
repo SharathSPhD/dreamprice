@@ -93,9 +93,7 @@ def load_full_model_scores() -> list[float]:
     return []
 
 
-def compute_p_value(
-    full_scores: list[float], ablation_scores: list[float]
-) -> float:
+def compute_p_value(full_scores: list[float], ablation_scores: list[float]) -> float:
     """Two-sided Welch's t-test comparing full model vs ablation."""
     if len(full_scores) < 2 or len(ablation_scores) < 2:
         return float("nan")
@@ -126,13 +124,15 @@ def print_ablation_table(results: dict[str, dict]) -> None:
         iqm_val, ci_low, ci_high = bootstrap_iqm(scores)
         p = compute_p_value(full_scores, scores)
         p_values.append(p)
-        rows.append((
-            name,
-            f"{iqm_val:.3f}",
-            f"[{ci_low:.3f}, {ci_high:.3f}]",
-            f"{p:.4f}" if not np.isnan(p) else "N/A",
-            "",  # placeholder for significance
-        ))
+        rows.append(
+            (
+                name,
+                f"{iqm_val:.3f}",
+                f"[{ci_low:.3f}, {ci_high:.3f}]",
+                f"{p:.4f}" if not np.isnan(p) else "N/A",
+                "",  # placeholder for significance
+            )
+        )
 
     rejects = holm_bonferroni(p_values)
 

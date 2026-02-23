@@ -33,11 +33,9 @@ class BaseGroceryEnv(gym.Env):
     @abstractmethod
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[np.ndarray, dict[str, Any]]:
-        ...
+    ) -> tuple[np.ndarray, dict[str, Any]]: ...
 
     @abstractmethod
     def step(
         self, action: np.ndarray | int
-    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
-        ...
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]: ...

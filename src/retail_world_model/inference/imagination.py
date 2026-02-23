@@ -12,9 +12,7 @@ from retail_world_model.training.offline_utils import mopo_lcb
 class ImagineInterface(Protocol):
     """Protocol for world models used in imagination rollouts."""
 
-    def encode_obs(
-        self, x_t: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]: ...
+    def encode_obs(self, x_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]: ...
 
     def imagine_step(
         self,
@@ -23,9 +21,7 @@ class ImagineInterface(Protocol):
         h_t: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]: ...
 
-    def reset_state(
-        self, batch_size: int
-    ) -> dict[str, torch.Tensor]: ...
+    def reset_state(self, batch_size: int) -> dict[str, torch.Tensor]: ...
 
 
 def rollout_imagination(
@@ -143,11 +139,8 @@ def compute_lambda_returns(
     last_return = values[:, -1]
 
     for t in reversed(range(H)):
-        last_return = (
-            rewards[:, t]
-            + gamma * continues[:, t] * (
-                (1 - lambda_) * values[:, t + 1] + lambda_ * last_return
-            )
+        last_return = rewards[:, t] + gamma * continues[:, t] * (
+            (1 - lambda_) * values[:, t + 1] + lambda_ * last_return
         )
         returns[:, t] = last_return
 

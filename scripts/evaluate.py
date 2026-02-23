@@ -72,30 +72,27 @@ def main() -> None:
         total_return = 0.0
         done = False
         while not done:
-            state = torch.cat([
-                torch.zeros(
-                    1, wm_cfg.get("d_model", 512), device=device
-                ),
-                torch.zeros(
-                    1, wm_cfg.get("z_dim", 1024), device=device
-                ),
-            ], dim=-1)
+            state = torch.cat(
+                [
+                    torch.zeros(1, wm_cfg.get("d_model", 512), device=device),
+                    torch.zeros(1, wm_cfg.get("z_dim", 1024), device=device),
+                ],
+                dim=-1,
+            )
             with torch.no_grad():
                 action, _, _ = ac.act(state, deterministic=True)
-            obs, reward, terminated, truncated, info = env.step(
-                action.squeeze(0).cpu().numpy()
-            )
+            obs, reward, terminated, truncated, info = env.step(action.squeeze(0).cpu().numpy())
             total_return += reward
             done = terminated or truncated
         returns.append(total_return)
-        print(f"Episode {ep+1}: return={total_return:.2f}")
+        print(f"Episode {ep + 1}: return={total_return:.2f}")
 
     mean_ret = float(np.mean(returns))
     std_ret = float(np.std(returns))
     n = len(returns)
     sorted_rets = sorted(returns)
     quarter = n // 4
-    iqm = float(np.mean(sorted_rets[quarter: -(quarter) or None]))
+    iqm = float(np.mean(sorted_rets[quarter : -(quarter) or None]))
 
     print(f"\nMean return: {mean_ret:.2f} +/- {std_ret:.2f}")
     print(f"IQM: {iqm:.2f}")
@@ -107,9 +104,7 @@ def main() -> None:
         "iqm": iqm,
     }
     Path("docs/results").mkdir(parents=True, exist_ok=True)
-    Path("docs/results/assessment.json").write_text(
-        json.dumps(results, indent=2)
-    )
+    Path("docs/results/assessment.json").write_text(json.dumps(results, indent=2))
     print("Results written to docs/results/assessment.json")
 
 
