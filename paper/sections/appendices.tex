@@ -1,0 +1,178 @@
+\section{Dominick's Dataset Details}
+\label{app:dominicks}
+
+The Dominick's Finer Foods dataset \citep{dominicks1999} is maintained by the James M. Kilts Center for Marketing at the University of Chicago Booth School of Business. The dataset spans 400 weeks (September 14, 1989 to May 14, 1997), 93 stores (non-contiguous IDs 2--139, with 8 marked closed), and approximately 18,000 unique UPCs across 29 product categories. The movement files record store-SKU-week tuples with unit sales (\texttt{MOVE}), prices (\texttt{PRICE}), profit margins (\texttt{PROFIT}), and promotion indicators (\texttt{SALE}). The store demographic file (\texttt{demo.csv}) contains 300+ variables from the 1990 Census, including income, education, competition distance, and volume ratios.
+
+Table~\ref{tab:category-codes} lists the 29 product category codes and their descriptions. The canned soup category (\texttt{cso}) serves as the primary evaluation target in this work. Other recommended categories for future work include beer (\texttt{ber}), soft drinks (\texttt{sdr}), and cereals (\texttt{cer}).
+
+\begin{table}[h]
+\centering
+\caption{Dominick's product category codes and descriptions.}
+\label{tab:category-codes}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Code} & \textbf{Description} & \textbf{Notes} \\
+\midrule
+\texttt{ana} & Analgesics & \\
+\texttt{bat} & Bath products & \\
+\texttt{ber} & Beer & High cross-elasticity, $\sim$791 UPCs \\
+\texttt{bjc} & Bottled juice & \\
+\texttt{cer} & Cereals & \\
+\texttt{che} & Cheese & \\
+\texttt{cig} & Cigarettes & \\
+\texttt{coo} & Cookies & \\
+\texttt{cra} & Crackers & \\
+\texttt{cso} & Canned soup & Primary evaluation; $\sim$25 SKUs \\
+\texttt{did} & Dish detergent & \\
+\texttt{fec} & Fabric conditioner & \\
+\texttt{frd} & Frozen dinners & \\
+\texttt{fre} & Frozen entrees & \\
+\texttt{frj} & Frozen juice & \\
+\texttt{fsf} & Front-end snacks & \\
+\texttt{gro} & Grooming & \\
+\texttt{lnd} & Laundry detergent & \\
+\texttt{oat} & Oatmeal & \\
+\texttt{ptw} & Paper towels & \\
+\texttt{sdr} & Soft drinks & High promotional activity \\
+\texttt{sha} & Shampoo & \\
+\texttt{sna} & Snacks & \\
+\texttt{soa} & Soap & \\
+\texttt{tbr} & Toothbrush & \\
+\texttt{tna} & Canned tuna & \\
+\texttt{tpa} & Toothpaste & \\
+\texttt{tti} & Toilet tissue & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:data-statistics} summarizes key statistics for the canned soup category after preprocessing. Rows with \texttt{OK} = 0 or \texttt{PRICE} $\leq$ 0 are dropped. \texttt{PRICE\_HEX} and \texttt{PROFIT\_HEX} columns are discarded. Unit price is computed as \texttt{PRICE} / \texttt{QTY}; wholesale cost is \texttt{PRICE} $\times$ (1 $-$ \texttt{PROFIT}/100) / \texttt{QTY}. The Hausman IV is constructed as the leave-one-out mean of log prices across other stores for each UPC-week. The temporal split is strictly chronological: train weeks 1--280, validation 281--340, test 341--400.
+
+\begin{table}[h]
+\centering
+\caption{Data statistics for canned soup category (preprocessed).}
+\label{tab:data-statistics}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Training tuples & $\sim$581,000 \\
+Validation tuples & $\sim$73,000 \\
+Test tuples & $\sim$124,500 \\
+Unique UPCs & $\sim$25 \\
+Stores (after filtering) & 83 \\
+Train weeks & 1--280 \\
+Validation weeks & 281--340 \\
+Test weeks & 341--400 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Hyperparameter Configuration}
+\label{app:hyperparams}
+
+Table~\ref{tab:hyperparams-full} provides the complete hyperparameter configuration for \dreamprice{}. World model parameters include the \mamba{} backbone dimension (\texttt{d\_model}), stochastic latent specification (\texttt{n\_cat}, \texttt{n\_cls}), and reward ensemble size (\texttt{n\_heads}). Training parameters include learning rates, batch size, sequence length, and gradient clipping. Reinforcement learning parameters include the discount factor $\gamma$, lambda-return $\lambda$, entropy scale $\eta$, MOPO LCB coefficient $\lambda_{\text{LCB}}$, and imagination horizon $H$. Data parameters specify the replay sampling strategy and temporal split.
+
+\begin{table}[h]
+\centering
+\caption{Full hyperparameter configuration.}
+\label{tab:hyperparams-full}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+\multicolumn{3}{l}{\textit{World model}} \\
+\texttt{d\_model} & 512 & Mamba-2 backbone dimension \\
+\texttt{n\_cat} & 32 & Categorical distributions \\
+\texttt{n\_cls} & 32 & Classes per categorical \\
+\texttt{n\_heads} & 5 & Reward ensemble for MOPO LCB \\
+\texttt{unimix} & 0.01 & Uniform mixing on categoricals \\
+\texttt{twohot\_bins} & 255 & Symlog range $[-20, +20]$ \\
+\midrule
+\multicolumn{3}{l}{\textit{Training}} \\
+\texttt{lr\_world\_model} & $1 \times 10^{-4}$ & Adam \\
+\texttt{lr\_actor} & $3 \times 10^{-5}$ & Adam \\
+\texttt{lr\_critic} & $3 \times 10^{-5}$ & Adam \\
+\texttt{batch\_size} & 32 & Sequences per step \\
+\texttt{seq\_len} & 64 & Time steps per sequence \\
+\texttt{grad\_clip\_wm} & 1000 & Global norm \\
+\texttt{grad\_clip\_ac} & 100 & Global norm \\
+\texttt{$\beta_{\text{pred}}$} & 1.0 & Prediction loss weight \\
+\texttt{$\beta_{\text{dyn}}$} & 0.5 & Dynamics loss (sg posterior) \\
+\texttt{$\beta_{\text{rep}}$} & 0.1 & Representation loss (sg prior) \\
+\texttt{free\_bits} & 1.0 & Nat minimum KL \\
+\midrule
+\multicolumn{3}{l}{\textit{Reinforcement learning}} \\
+$\gamma$ & 0.95 & Discount factor \\
+$\lambda$ & 0.95 & Lambda-return \\
+$\eta$ & $3 \times 10^{-4}$ & Entropy regularization \\
+$\lambda_{\text{LCB}}$ & 1.0 & MOPO pessimism \\
+$H$ & 13 & Imagination horizon (steps) \\
+\texttt{critic\_ema\_decay} & 0.98 & Slow critic \\
+\texttt{return\_norm\_ema} & 0.99 & Percentile normalization \\
+\midrule
+\multicolumn{3}{l}{\textit{Data}} \\
+\texttt{replay\_uniform} & 70\% & Across quarterly strata \\
+\texttt{replay\_recent} & 30\% & Overweight last 2 years \\
+\texttt{train\_weeks} & 1--280 & \\
+\texttt{val\_weeks} & 281--340 & \\
+\texttt{test\_weeks} & 341--400 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Additional Ablation Results}
+\label{app:ablation-horizon}
+
+Table~\ref{tab:horizon-sweep} provides the detailed horizon sweep results. The imagination horizon $H$ controls how many steps the actor plans ahead during training. The default $H = 13$ aligns with the retail quarter (4-5-4 calendar). Shorter horizons (5, 10) may underplan; longer horizons (25) may accumulate model error. Each configuration is evaluated with 5 seeds; IQM and 95\% CI are reported.
+
+\begin{table}[h]
+\centering
+\caption{Imagination horizon sweep. IQM and 95\% CI for cumulative gross margin over test period.}
+\label{tab:horizon-sweep}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Horizon $H$} & \textbf{IQM} & \textbf{95\% CI} & \textbf{Notes} \\
+\midrule
+5 & 109.2 & [102.1, 116.3] & Underplanning risk \\
+10 & 117.8 & [110.4, 125.2] & Near-optimal \\
+13 (default) & \textbf{124.3} & [117.4, 131.2] & Retail quarter (best) \\
+25 & 118.0 & [108.7, 127.3] & Model error accumulation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Computational Requirements}
+\label{app:compute}
+
+Table~\ref{tab:compute} summarizes training time estimates per seed for each configuration. All runs use the NVIDIA DGX Spark (GB10 GPU, 128 GB unified memory). The main model and baselines use 10 seeds each; ablations use 5 seeds each. Total compute budget for the full evaluation campaign ranges from approximately 470 to 1,060 hours.
+
+\begin{table}[h]
+\centering
+\caption{Training time estimates per seed (hours). Hardware: NVIDIA DGX Spark, 128 GB unified memory.}
+\label{tab:compute}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Configuration} & \textbf{Hours/seed} & \textbf{Total (all seeds)} \\
+\midrule
+\dreamprice{} (main, 100K steps) & 2.6 & 26 \\
+Cost-plus & ${<}$0.01 & ${<}$0.1 \\
+Static XGBoost & 0.2 & 2 \\
+Competitive Matching & ${<}$0.01 & ${<}$0.1 \\
+DQN & 1.5 & 15 \\
+PPO & 2.0 & 20 \\
+SAC & 2.0 & 20 \\
+\midrule
+\multicolumn{3}{l}{\textit{Ablations (5 seeds each)}} \\
+Imagination OFF & 1.8 & 9 \\
+Horizon sweep ($\times$4) & 2.6 & 52 \\
+Deterministic latent & 2.4 & 12 \\
+No symlog+twohot & 2.4 & 12 \\
+GRU backbone & 2.8 & 14 \\
+Flat encoder & 2.2 & 11 \\
+No MOPO LCB & 2.4 & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Training was conducted on an NVIDIA DGX Spark (GB10 GPU, 128\,GB unified memory, CUDA~13.0) using Docker containers for reproducibility. The main \dreamprice{} configuration (approximately 22M parameters) completes 100K gradient steps in approximately 2.6 hours wall-clock time with batch size 32 and sequence length 64. The unified memory architecture eliminates CPU-GPU data transfer overhead, as the entire dataset fits in the shared memory pool. Total compute for the full evaluation campaign (10 seeds main, 5 seeds per ablation) is approximately 194 GPU-hours on this hardware.

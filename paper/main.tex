@@ -1,0 +1,69 @@
+\documentclass[11pt, a4paper]{article}
+
+% ===== Packages =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{tabularx}
+
+% ===== Custom Commands =====
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\symlog}{\operatorname{symlog}}
+\newcommand{\symexp}{\operatorname{symexp}}
+\newcommand{\sg}{\operatorname{sg}}
+\newcommand{\dreamprice}{\textsc{DreamPrice}}
+\newcommand{\dreamer}{\textsc{DreamerV3}}
+\newcommand{\mamba}{\textsc{Mamba-2}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+% ===== Title =====
+\title{\dreamprice{}: A Learned World Model for Retail Pricing\\via Mamba-2 Recurrence and Causal Demand Identification}
+
+\author{Sharath Sathish\\
+  University of York\\
+  York, UK
+}
+
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Retail pricing remains one of the most consequential sequential decision problems in operations research, yet no learned world model exists for economic environments. This paper introduces \dreamprice{}, the first learned world model for retail pricing that combines \dreamer{}'s three-phase training recipe with a \mamba{} selective state-space backbone, DRAMA-style decoupled posteriors, and a causally-constrained demand decoder. The model is trained offline on the Dominick's Finer Foods scanner dataset (1989--1997, 93 stores, ${\sim}18$K UPCs) and employs MOPO-style pessimism via a 5-head reward ensemble to guard against distributional shift inherent in offline learning. Causal price elasticities are estimated via Hausman instrumental variables combined with double machine learning (DML-PLIV) and frozen into the decoder, preventing the model from learning confounded price-demand relationships. The architecture replaces the GRU backbone of standard RSSMs with \mamba{}'s structured state-space duality (SSD), enabling $O(n)$ parallel training and $O(1)$-per-step recurrent imagination. Experiments on the canned soup category demonstrate that \dreamprice{} learns demand dynamics that capture promotional responses, substitution effects, and price elasticities, while the offline RL agent achieves higher cumulative gross margin than cost-plus, competitive matching, and model-free baselines.
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/literature_review}
+\input{sections/methodology}
+\input{sections/results}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/appendices}
+
+\end{document}

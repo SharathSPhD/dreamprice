@@ -68,6 +68,7 @@ class ActorCritic(nn.Module):
         """
         logits = self.actor(state)  # (B, n_skus * action_dim)
         logits = logits.view(-1, self.n_skus, self.action_dim)  # (B, n_skus, 21)
+        logits = torch.nan_to_num(logits, nan=0.0, posinf=10.0, neginf=-10.0)
 
         dist = torch.distributions.Categorical(logits=logits)
 

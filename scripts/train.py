@@ -9,11 +9,14 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="experiment/main")
+@hydra.main(version_base=None, config_path="../configs", config_name="main")
 def main(cfg: DictConfig) -> None:
-    from dotenv import load_dotenv
+    try:
+        from dotenv import load_dotenv
 
-    load_dotenv()
+        load_dotenv()
+    except ImportError:
+        pass
 
     from retail_world_model.applications.pricing_policy import ActorCritic
     from retail_world_model.data.dataset import (
@@ -48,8 +51,19 @@ def main(cfg: DictConfig) -> None:
     df = load_category(
         f"{data_dir}/{category}/w{category}.csv",
         f"{data_dir}/{category}/upc{category}.csv",
-        f"{data_dir}/{category}/demo.csv",
+        f"{data_dir}/demo.csv",
     )
+
+    max_stores = cfg.get("max_stores", 0)
+    if max_stores > 0:
+        stores = sorted(df["STORE"].unique())[:max_stores]
+        df = df[df["STORE"].isin(stores)].reset_index(drop=True)
+        print(f"Limited to {max_stores} stores: {len(df):,} rows")
+
+    max_rows = cfg.get("max_rows", 500_000)
+    if len(df) > max_rows:
+        print(f"Sampling {max_rows:,} from {len(df):,} rows for memory efficiency")
+        df = df.sample(n=max_rows, random_state=seed).reset_index(drop=True)
 
     seq_len = cfg.agent.seq_len
     n_skus = cfg.environment.n_skus

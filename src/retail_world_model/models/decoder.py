@@ -31,7 +31,13 @@ class CausalDemandDecoder(nn.Module):
         if elasticity_path and Path(elasticity_path).exists():
             with open(elasticity_path) as f:
                 data = json.load(f)
-            thetas = data["theta"]
+            if "theta" in data:
+                raw = data["theta"]
+                thetas = raw if isinstance(raw, list) else [raw] * n_categories
+            elif "theta_causal" in data:
+                thetas = [data["theta_causal"]] * n_categories
+            else:
+                thetas = [-2.5] * n_categories
         else:
             # Prior mean for grocery categories
             thetas = [-2.5] * n_categories

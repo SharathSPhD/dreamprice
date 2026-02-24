@@ -72,13 +72,15 @@ def main() -> None:
         total_return = 0.0
         done = False
         while not done:
-            state = torch.cat(
-                [
-                    torch.zeros(1, wm_cfg.get("d_model", 512), device=device),
-                    torch.zeros(1, wm_cfg.get("z_dim", 1024), device=device),
-                ],
-                dim=-1,
-            )
+            d_m = wm_cfg.get("d_model", 512)
+            z_d = wm_cfg.get("z_dim", 1024)
+            h_t = env._h_t if env._h_t is not None else torch.zeros(1, d_m, device=device)
+            z_t = env._z_t if env._z_t is not None else torch.zeros(1, z_d, device=device)
+            if isinstance(h_t, torch.Tensor):
+                h_t = h_t.to(device)
+            if isinstance(z_t, torch.Tensor):
+                z_t = z_t.to(device)
+            state = torch.cat([h_t.reshape(1, -1), z_t.reshape(1, -1)], dim=-1)
             with torch.no_grad():
                 action, _, _ = ac.act(state, deterministic=True)
             obs, reward, terminated, truncated, info = env.step(action.squeeze(0).cpu().numpy())

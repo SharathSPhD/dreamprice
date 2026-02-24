@@ -66,7 +66,8 @@ def rollout_imagination(
     h_t = h0
 
     for _t in range(H):
-        # Actor selects action from current state
+        h_t = torch.nan_to_num(h_t, nan=0.0)
+        z_t = torch.nan_to_num(z_t, nan=0.0)
         state_input = torch.cat([h_t, z_t], dim=-1)
         action, log_prob, entropy = policy.act(state_input)
         actions.append(action)

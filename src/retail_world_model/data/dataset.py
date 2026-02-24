@@ -51,38 +51,116 @@ class DominicksSequenceDataset(Dataset):
             "CPWVOL5",
         ]
 
-        # Precompute derived columns
         df = df.copy()
         df["unit_price_raw"] = compute_unit_price(df)
         df["cost_raw"] = compute_cost(df)
 
-        # Build observation vectors
         self._obs = build_observation_vector(df, self.store_demo_cols)
         self._obs_dim = self._obs.shape[1]
 
-        # Build per-row metadata for sequence extraction
         df["_row_idx"] = np.arange(len(df))
-        self._df = df
 
-        # Identify top-K SKUs per store by total MOVE
-        self._store_skus: dict[int, list[int]] = {}
+        store_skus: dict[int, list[int]] = {}
         for store, grp in df.groupby("STORE"):
             sku_vol = grp.groupby("UPC")["MOVE"].sum().sort_values(ascending=False)
-            self._store_skus[int(store)] = list(sku_vol.index[:n_skus])
+            store_skus[int(store)] = list(sku_vol.index[:n_skus])
+        self._store_skus = store_skus
 
-        # Build sequence index: (store, start_week) pairs
-        self._sequences: list[tuple[int, int]] = []
-        for store in sorted(df["STORE"].unique()):
-            weeks = sorted(df[df["STORE"] == store]["WEEK"].unique())
-            for i in range(len(weeks) - seq_len + 1):
-                self._sequences.append((int(store), int(weeks[i])))
-
-        # Precompute week-indexed data per store for fast __getitem__
-        self._store_week_data: dict[int, dict[int, pd.DataFrame]] = {}
+        store_week_data: dict[int, dict[int, pd.DataFrame]] = {}
         for store, grp in df.groupby("STORE"):
-            self._store_week_data[int(store)] = {
+            store_week_data[int(store)] = {
                 int(week): week_grp for week, week_grp in grp.groupby("WEEK")
             }
+
+        sequences: list[tuple[int, int]] = []
+        for store in sorted(df["STORE"].unique()):
+            weeks = sorted(store_week_data[int(store)].keys())
+            for i in range(len(weeks) - seq_len + 1):
+                sequences.append((int(store), int(weeks[i])))
+
+        self._precomputed = self._precompute_all(sequences, store_skus, store_week_data, df)
+        self._sequences = sequences
+        self._df = df
+
+    def _precompute_all(self, sequences, store_skus, store_week_data, df):  # noqa: C901
+        """Precompute all sequences as tensors for fast __getitem__."""
+        T = self.seq_len
+        K = self.n_skus
+        obs_dim = self._obs_dim
+        N = len(sequences)
+
+        all_x = np.zeros((N, T, obs_dim), dtype=np.float32)
+        all_a = np.zeros((N, T, K), dtype=np.float32)
+        all_r = np.zeros((N, T), dtype=np.float32)
+        all_done = np.zeros((N, T), dtype=np.float32)
+        all_lp = np.zeros((N, T, K), dtype=np.float32)
+
+        store_demo_cache: dict[int, np.ndarray] = {}
+        for store in df["STORE"].unique():
+            store_rows = df[df["STORE"] == store]
+            feats = np.zeros(len(self.store_demo_cols), dtype=np.float32)
+            for ci, col in enumerate(self.store_demo_cols):
+                if col in store_rows.columns:
+                    feats[ci] = float(store_rows[col].iloc[0])
+            store_demo_cache[int(store)] = feats
+
+        for idx, (store, start_week) in enumerate(sequences):
+            skus = store_skus[store]
+            swd = store_week_data[store]
+            weeks = sorted(swd.keys())
+            si = weeks.index(start_week)
+            seq_weeks = weeks[si : si + T]
+
+            prev_prices = None
+            for t, week in enumerate(seq_weeks):
+                if week not in swd:
+                    continue
+                wk_df = swd[week]
+                row_indices = wk_df["_row_idx"].values
+                if len(row_indices) > 0:
+                    all_x[idx, t] = self._obs[row_indices].mean(axis=0)
+
+                prices = np.zeros(K, dtype=np.float32)
+                for k, upc in enumerate(skus):
+                    sku_rows = wk_df[wk_df["UPC"] == upc]
+                    if len(sku_rows) > 0:
+                        p = float(sku_rows["unit_price_raw"].iloc[0])
+                        prices[k] = p
+                        all_lp[idx, t, k] = float(np.log(max(p, 1e-6)))
+
+                if prev_prices is not None:
+                    safe_prev = np.maximum(prev_prices, 1e-6)
+                    all_a[idx, t] = prices / safe_prev
+                prev_prices = prices.copy()
+
+                total_reward = 0.0
+                for upc in skus:
+                    sku_rows = wk_df[wk_df["UPC"] == upc]
+                    if len(sku_rows) > 0:
+                        margin = float(
+                            sku_rows["unit_price_raw"].iloc[0] - sku_rows["cost_raw"].iloc[0]
+                        )
+                        units = float(sku_rows["MOVE"].iloc[0])
+                        total_reward += margin * max(units, 0.0)
+                all_r[idx, t] = total_reward
+
+                if t == T - 1:
+                    all_done[idx, t] = 1.0
+
+            if (idx + 1) % 5000 == 0:
+                print(f"  Precomputed {idx + 1}/{N} sequences")
+
+        all_sf = np.stack([store_demo_cache[s] for s, _ in sequences])
+        print(f"  Precomputation complete: {N} sequences")
+
+        return {
+            "x": torch.from_numpy(all_x),
+            "a": torch.from_numpy(all_a),
+            "r": torch.from_numpy(all_r),
+            "done": torch.from_numpy(all_done),
+            "lp": torch.from_numpy(all_lp),
+            "sf": torch.from_numpy(all_sf),
+        }
 
     def __len__(self) -> int:
         return len(self._sequences)
@@ -133,56 +211,14 @@ class DominicksSequenceDataset(Dataset):
         return store_feats
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        store, start_week = self._sequences[idx]
-        skus = self._store_skus[store]
-        store_data = self._store_week_data[store]
-
-        weeks = sorted(store_data.keys())
-        start_pos = weeks.index(start_week)
-        seq_weeks = weeks[start_pos : start_pos + self.seq_len]
-
-        T = len(seq_weeks)
-        K = self.n_skus
-        obs_dim = self._obs_dim
-
-        x_BT = torch.zeros(T, obs_dim)
-        a_BT = torch.zeros(T, K)
-        r_BT = torch.zeros(T)
-        done_BT = torch.zeros(T)
-        log_price_BT = torch.zeros(T, K)
-
-        prev_prices = None
-        for t, week in enumerate(seq_weeks):
-            if week not in store_data:
-                continue
-            wk_df = store_data[week]
-
-            # Aggregate observation across SKUs (mean pool)
-            row_indices = wk_df["_row_idx"].values
-            if len(row_indices) > 0:
-                x_BT[t] = torch.tensor(self._obs[row_indices].mean(axis=0), dtype=torch.float32)
-
-            prices = self._get_week_prices(wk_df, skus, log_price_BT[t])
-
-            # Action = price ratio (how price changed from previous week)
-            if prev_prices is not None:
-                safe_prev = prev_prices.clamp(min=1e-6)
-                a_BT[t] = prices / safe_prev
-            prev_prices = prices.clone()
-
-            r_BT[t] = self._get_week_reward(wk_df, skus)
-
-            # Episode done at last step
-            if t == T - 1:
-                done_BT[t] = 1.0
-
+        p = self._precomputed
         return {
-            "x_BT": x_BT,  # (T, obs_dim)
-            "a_BT": a_BT,  # (T, n_skus)
-            "r_BT": r_BT,  # (T,)
-            "done_BT": done_BT,  # (T,)
-            "log_price_BT": log_price_BT,  # (T, n_skus)
-            "store_features": self._get_store_features(store),  # (n_store_features,)
+            "x_BT": p["x"][idx],
+            "a_BT": p["a"][idx],
+            "r_BT": p["r"][idx],
+            "done_BT": p["done"][idx],
+            "log_price_BT": p["lp"][idx],
+            "store_features": p["sf"][idx],
         }
 
 

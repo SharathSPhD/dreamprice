@@ -1,5 +1,6 @@
 """Load and clean Dominick's Finer Foods scanner dataset."""
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -43,8 +44,8 @@ def load_category(
     # Merge with store demographics
     df = df.merge(demo, on="STORE", how="left")
 
-    # Zero-sales insertion
-    df = _insert_zero_sales(df)
+    if not os.environ.get("DREAMPRICE_SKIP_ZERO_SALES"):
+        df = _insert_zero_sales(df)
 
     return df.reset_index(drop=True)
 

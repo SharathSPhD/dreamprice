@@ -1,0 +1,232 @@
+\begin{thebibliography}{35}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[dom(1999)]{dominicks1999}
+Dominick's finer foods dataset.
+\newblock Technical report, James M. Kilts Center for Marketing, University of
+  Chicago Booth School of Business, 1999.
+\newblock URL
+  \url{https://www.chicagobooth.edu/research/kilts/datasets/dominicks}.
+
+\bibitem[Agarwal et~al.(2021)Agarwal, Schwarzer, Castro, Courville, and
+  Bellemare]{agarwal2021deep}
+Rishabh Agarwal, Max Schwarzer, Pablo~Samuel Castro, Aaron Courville, and
+  Marc~G. Bellemare.
+\newblock Deep reinforcement learning at the edge of the statistical precipice.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Bach et~al.(2022)Bach, Chernozhukov, Kurz, and
+  Spindler]{bach2024doubleml}
+Philipp Bach, Victor Chernozhukov, Malte~S. Kurz, and Martin Spindler.
+\newblock {DoubleML}: An object-oriented implementation of double machine
+  learning in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 23\penalty0
+  (53):\penalty0 1--6, 2022.
+
+\bibitem[Ban and Keskin(2021)]{ban2021personalized}
+Gah-Yi Ban and N.~Bora Keskin.
+\newblock Personalized dynamic pricing with machine learning: High-dimensional
+  features and heterogeneous elasticity.
+\newblock In \emph{Management Science}, volume~67, pages 5549--5568, 2021.
+
+\bibitem[Bellemare et~al.(2017)Bellemare, Dabney, and
+  Munos]{bellemare2017distributional}
+Marc~G. Bellemare, Will Dabney, and R{\'e}mi Munos.
+\newblock A distributional perspective on reinforcement learning.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2017.
+
+\bibitem[Berry et~al.(1995)Berry, Levinsohn, and Pakes]{berry1995automobile}
+Steven Berry, James Levinsohn, and Ariel Pakes.
+\newblock Automobile prices in market equilibrium.
+\newblock \emph{Econometrica}, 63\penalty0 (4):\penalty0 841--890, 1995.
+
+\bibitem[Chen and Simchi-Levi(2022)]{chen2022dynamic}
+Xinyun Chen and David Simchi-Levi.
+\newblock Dynamic pricing with reinforcement learning.
+\newblock \emph{Management Science}, 2022.
+
+\bibitem[Chernozhukov et~al.(2018)Chernozhukov, Chetverikov, Demirer, Duflo,
+  Hansen, Newey, and Robins]{chernozhukov2018dml}
+Victor Chernozhukov, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian
+  Hansen, Whitney Newey, and James Robins.
+\newblock Double/debiased machine learning for treatment and structural
+  parameters.
+\newblock \emph{The Econometrics Journal}, 21\penalty0 (1):\penalty0 C1--C68,
+  2018.
+
+\bibitem[Dao and Gu(2024)]{dao2024mamba2}
+Tri Dao and Albert Gu.
+\newblock Transformers are {SSMs}: Generalized models and efficient algorithms
+  through structured state space duality.
+\newblock \emph{International Conference on Machine Learning (ICML)}, 2024.
+
+\bibitem[Gu and Dao(2024)]{gu2024mamba}
+Albert Gu and Tri Dao.
+\newblock Mamba: Linear-time sequence modeling with selective state spaces.
+\newblock \emph{arXiv preprint arXiv:2312.00752}, 2024.
+
+\bibitem[Gu et~al.(2022)Gu, Goel, and R{\'e}]{gu2022s4}
+Albert Gu, Karan Goel, and Christopher R{\'e}.
+\newblock Efficiently modeling long sequences with structured state spaces.
+\newblock \emph{International Conference on Learning Representations (ICLR)},
+  2022.
+
+\bibitem[Ha and Schmidhuber(2018)]{ha2018worldmodels}
+David Ha and J{\"u}rgen Schmidhuber.
+\newblock World models.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2018.
+
+\bibitem[Hafner et~al.(2020)Hafner, Lillicrap, Ba, and
+  Norouzi]{hafner2020dreamerv1}
+Danijar Hafner, Timothy Lillicrap, Jimmy Ba, and Mohammad Norouzi.
+\newblock Dream to control: Learning behaviors by latent imagination.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2020.
+
+\bibitem[Hafner et~al.(2021)Hafner, Lillicrap, Norouzi, and
+  Ba]{hafner2021dreamerv2}
+Danijar Hafner, Timothy Lillicrap, Mohammad Norouzi, and Jimmy Ba.
+\newblock Mastering atari with discrete world models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2021.
+
+\bibitem[Hafner et~al.(2023)Hafner, Pasukonis, Ba, and
+  Lillicrap]{hafner2023dreamerv3}
+Danijar Hafner, Jurgis Pasukonis, Jimmy Ba, and Timothy Lillicrap.
+\newblock Mastering diverse domains through world models.
+\newblock \emph{arXiv preprint arXiv:2301.04104}, 2023.
+
+\bibitem[Hansen et~al.(2024)Hansen, Su, and Wang]{hansen2024tdmpc2}
+Nicklas Hansen, Hao Su, and Xiaolong Wang.
+\newblock {TD-MPC2}: Scalable, robust world models for continuous control.
+\newblock \emph{arXiv preprint arXiv:2310.16828}, 2024.
+
+\bibitem[Hausman(1978)]{hausman1978specification}
+Jerry~A. Hausman.
+\newblock Specification tests in econometrics.
+\newblock \emph{Econometrica}, 46\penalty0 (6):\penalty0 1251--1271, 1978.
+
+\bibitem[Hoch et~al.(1995)Hoch, Kim, Montgomery, and
+  Rossi]{hoch1995determinants}
+Stephen~J. Hoch, Byung-Do Kim, Alan~L. Montgomery, and Peter~E. Rossi.
+\newblock Determinants of store-level price elasticity.
+\newblock \emph{Journal of Marketing Research}, 32\penalty0 (1):\penalty0
+  17--29, 1995.
+
+\bibitem[Holm(1979)]{holm1979simple}
+Sture Holm.
+\newblock A simple sequentially rejective multiple test procedure.
+\newblock \emph{Scandinavian Journal of Statistics}, 6\penalty0 (2):\penalty0
+  65--70, 1979.
+
+\bibitem[Jang et~al.(2017)Jang, Gu, and Poole]{jang2017gumbel}
+Eric Jang, Shixiang Gu, and Ben Poole.
+\newblock Categorical reparameterization with {Gumbel-Softmax}.
+\newblock \emph{International Conference on Learning Representations (ICLR)},
+  2017.
+
+\bibitem[Kidambi et~al.(2020)Kidambi, Rajeswaran, Netrapalli, and
+  Joachims]{kidambi2020morel}
+Rahul Kidambi, Aravind Rajeswaran, Praneeth Netrapalli, and Thorsten Joachims.
+\newblock {MOReL}: Model-based offline reinforcement learning.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2020.
+
+\bibitem[Kingma and Welling(2014)]{kingma2014vae}
+Diederik~P. Kingma and Max Welling.
+\newblock Auto-encoding variational {Bayes}.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2014.
+
+\bibitem[Kumar et~al.(2020)Kumar, Zhou, Tucker, and Levine]{kumar2020cql}
+Aviral Kumar, Aurick Zhou, George Tucker, and Sergey Levine.
+\newblock Conservative {Q}-learning for offline reinforcement learning.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2020.
+
+\bibitem[Levine et~al.(2020)Levine, Kumar, Tucker, and Fu]{levine2020offline}
+Sergey Levine, Aviral Kumar, George Tucker, and Justin Fu.
+\newblock Offline reinforcement learning: Tutorial, review, and perspectives on
+  open problems.
+\newblock In \emph{arXiv preprint arXiv:2005.01643}, 2020.
+
+\bibitem[Montgomery(1997)]{montgomery1997estimating}
+Alan~L. Montgomery.
+\newblock Estimating heterogeneous price thresholds.
+\newblock \emph{Marketing Science}, 16\penalty0 (4):\penalty0 334--350, 1997.
+
+\bibitem[Nevo(2001)]{nevo2001measuring}
+Aviv Nevo.
+\newblock Measuring market power in the ready-to-eat cereal industry.
+\newblock \emph{Econometrica}, 69\penalty0 (2):\penalty0 307--342, 2001.
+
+\bibitem[Park and Gupta(2010)]{park2010copula}
+Sungho Park and Sachin Gupta.
+\newblock A non-parametric approach to demand estimation with endogeneity.
+\newblock \emph{Marketing Science}, 29\penalty0 (5):\penalty0 802--817, 2010.
+
+\bibitem[Rajbhandari et~al.(2024)Rajbhandari, Li, Yao, Zhang, Aminabadi, Awan,
+  Rasley, and He]{rajbhandari2024drama}
+Samyam Rajbhandari, Conglong Li, Zhewei Yao, Minjia Zhang, Reza~Yazdani
+  Aminabadi, Ammar~Ahmad Awan, Jeff Rasley, and Yuxiong He.
+\newblock {DRAMA}: Decoupled recurrence for attention-like memory
+  architectures.
+\newblock \emph{arXiv preprint arXiv:2410.01859}, 2024.
+
+\bibitem[Ramsey(1927)]{ramsey1927contribution}
+Frank~P. Ramsey.
+\newblock A contribution to the theory of taxation.
+\newblock \emph{The Economic Journal}, 37\penalty0 (145):\penalty0 47--61,
+  1927.
+
+\bibitem[Schrittwieser et~al.(2020)Schrittwieser, Antonoglou, Hubert, Simonyan,
+  Sifre, Schmitt, Guez, Lockhart, Hassabis, Graepel, Lillicrap, and
+  Silver]{schrittwieser2020muzero}
+Julian Schrittwieser, Ioannis Antonoglou, Thomas Hubert, Karen Simonyan,
+  Laurent Sifre, Simon Schmitt, Arthur Guez, Edward Lockhart, Demis Hassabis,
+  Thore Graepel, Timothy Lillicrap, and David Silver.
+\newblock Mastering atari, go, chess and shogi by planning with a learned
+  model.
+\newblock In \emph{Nature}, volume 588, pages 604--609, 2020.
+
+\bibitem[Sutton and Barto(2018)]{sutton2018reinforcement}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock \emph{Reinforcement Learning: An Introduction}.
+\newblock MIT Press, 2nd edition, 2018.
+
+\bibitem[Yu et~al.(2020)Yu, Thomas, Yu, Ermon, Zou, Levine, Finn, and
+  Ma]{yu2020mopo}
+Tianhe Yu, Garrett Thomas, Lantao Yu, Stefano Ermon, James Zou, Sergey Levine,
+  Chelsea Finn, and Tengyu Ma.
+\newblock {MOPO}: Model-based offline policy optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2020.
+
+\bibitem[Yu et~al.(2021)Yu, Kumar, Chebotar, Hausman, Levine, and
+  Finn]{yu2021combo}
+Tianhe Yu, Aviral Kumar, Yevgen Chebotar, Karol Hausman, Sergey Levine, and
+  Chelsea Finn.
+\newblock {COMBO}: Conservative offline model-based policy optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Zhang et~al.(2023)Zhang, Tzeng, Darrell, and Efros]{zhang2023iris}
+Vincent Zhang, Eric Tzeng, Trevor Darrell, and Alexei~A. Efros.
+\newblock {IRIS}: Transformers for world models.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2023.
+
+\bibitem[Zheng et~al.(2020)Zheng, Trott, Srinivasa, Naik, Gruesbeck, Parkes,
+  and Socher]{zheng2020aieconomist}
+Stephan Zheng, Alexander Trott, Sunil Srinivasa, Nikhil Naik, Melvin Gruesbeck,
+  David~C. Parkes, and Richard Socher.
+\newblock The {AI} economist: Improving equality and productivity with
+  {AI}-driven tax policies.
+\newblock In \emph{arXiv preprint arXiv:2004.13332}, 2020.
+
+\end{thebibliography}

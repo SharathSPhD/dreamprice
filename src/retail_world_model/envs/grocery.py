@@ -123,7 +123,8 @@ class GroceryPricingEnv(BaseGroceryEnv):
             return np.clip(units, 0, None).astype(np.float32)
 
         with torch.no_grad():
-            a_t = torch.tensor(action, dtype=torch.float32).unsqueeze(0)
+            multipliers = np.array([PRICE_MULTIPLIERS[int(a)] for a in action], dtype=np.float32)
+            a_t = torch.tensor(multipliers, dtype=torch.float32).unsqueeze(0)
             device = next(self.world_model.parameters()).device
             a_t = a_t.to(device)
 

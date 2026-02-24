@@ -6,9 +6,10 @@ import argparse
 import sys
 
 try:
-    import wandb
     from stable_baselines3 import SAC
     from stable_baselines3.common.callbacks import BaseCallback
+
+    import wandb
 except ImportError as e:
     print(f"Missing dependency: {e}")
     sys.exit(1)
