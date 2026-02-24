@@ -273,6 +273,70 @@ reviewers will expect.
 
 ---
 
+## Gap 11 — API Serving Uses Stub Functions Only (High)
+
+`src/retail_world_model/api/serve.py` exposes `/recommend`, `/imagine`, and `/stream`
+endpoints, but all three are wired to stub functions that return **random prices and
+profits** rather than real model predictions:
+
+```python
+# Lines 21–36
+async def _stub_batch_fn(requests: list[Any]) -> list[PricingResponse]:
+    """Process a batch of pricing requests with stub predictions."""
+    ...  # returns random values
+
+# Line 76 (inside lifespan)
+# Future: load real model here
+batch_fn = _stub_batch_fn
+```
+
+The comment on line 76 (`# Future: load real model here`) confirms that checkpoint
+loading was never implemented. The paper claims "Real-time deployment via the FastAPI
+serving layer would enable integration with live pricing systems," but the API cannot
+currently serve any real predictions.
+
+**Required action:** Implement `_load_model(model_path)` in `serve.py` to load a
+`MambaWorldModel` and `ActorCritic` from a checkpoint, and wire them into the batch
+function. This requires Gap 1 (real checkpoints) to be resolved first.
+
+---
+
+## Gap 12 — Entity-Factored Encoder Not Implemented (Medium)
+
+The project blueprint (§5) defines an `EntityEncoder` with per-entity embeddings
+(UPC, store, brand, month) and dual attention (temporal + relational cross-SKU). The
+paper's methodology mentions "entity-factored representation" as supporting transfer
+learning across categories.
+
+However, the `models/` directory contains only:
+- `encoder.py` (flat MLP observation encoder) ✓
+- No `entity_encoder.py`
+
+The ablation "Flat encoder" (Table 4, IQM=108.3) compares the full entity-factored model
+against the flat alternative — but neither the entity encoder nor the ablation result
+(which is `"status": "pending"`) are implemented.
+
+**Required action:** Either implement the entity-factored encoder to enable this ablation,
+or update the paper to remove the entity-factored ablation claim and clarify that only
+the flat encoder was evaluated.
+
+---
+
+## Gap 13 — Planning Module Absent (Low)
+
+The blueprint (§12) specifies an `inference/planning.py` module for inference-time
+price optimization via CEM (cross-entropy method) or gradient-based search. The file
+does not exist; `src/retail_world_model/inference/` contains only `imagination.py` and
+`__init__.py`.
+
+This module is not cited as a contribution in the paper, so its absence does not affect
+paper claims. However, it limits the system's practical utility for deployment.
+
+**Required action:** Either implement a basic planning wrapper, or explicitly document
+in the README and paper that inference-time planning is not yet available.
+
+---
+
 ## Summary Table
 
 | # | Category | Severity | Status |
@@ -280,13 +344,16 @@ reviewers will expect.
 | 1 | No experiments run; ablations pending; no checkpoints | **Critical** | Unresolved |
 | 2 | No raw Dominick's data in repository | **Critical** | Unresolved |
 | 3 | CUDA 13.0 does not exist | High | Unresolved |
+| 11 | API serving uses random-value stubs; real model never loaded | High | Unresolved |
 | 4 | Incorrect IRIS citation (wrong authors, wrong venue) | Medium | Unresolved |
+| 8 | Elasticity design target vs actual value + Ramsey error | Medium | Unresolved |
+| 12 | Entity-factored encoder not implemented; blocks 1 ablation | Medium | Unresolved |
 | 5 | bach2024doubleml key–year mismatch | Low | Unresolved |
 | 6 | MuZero and Elfwing entries use wrong BibTeX type | Low | Unresolved |
 | 7 | Compute budget inconsistency (194 vs 470–1,060 hours) | Low | Unresolved |
-| 8 | Elasticity design target vs actual value + Ramsey error | Medium | Unresolved |
 | 9 | DRAMA attribution overstated | Low | Unresolved |
 | 10 | ABIDES and DSGE missing citations | Low | Unresolved |
+| 13 | Planning module (`inference/planning.py`) absent | Low | Unresolved |
 
 ---
 
@@ -310,8 +377,14 @@ The following elements are correctly implemented and internally consistent:
   documented consistently across code, paper, and CLAUDE.md.
 - **Hausman IV construction**: The leave-one-out mean formula in `transforms.py` is
   correct and matches the paper description.
-- **Test coverage**: The test suite covers RSSM shapes, DRAMA decoupling invariant,
-  decoder causal constraint, posterior shapes, and distribution utilities.
+- **Test coverage**: The test suite (23 test files, 9 test directories) covers RSSM
+  shapes, DRAMA decoupling invariant, decoder causal constraint, posterior shapes,
+  distribution utilities, API health endpoints, and trainer integration.
+- **Hydra configuration system**: All 7 ablation configs, world model config, agent
+  config, and environment config are properly structured and correctly parameterize the
+  codebase.
+- **Three-phase training loop**: All of Phase A (world model ELBO), Phase B (actor
+  imagination), and Phase C (critic update) are fully wired in `trainer.py`.
 
 ---
 
@@ -322,6 +395,8 @@ The following elements are correctly implemented and internally consistent:
    generate figures from real training outputs.
 2. **Before submission:** Fix IRIS citation, fix MuZero/Elfwing BibTeX types,
    fix bach key–year, add ABIDES/DSGE citations, correct CUDA version.
-3. **Before public release:** Resolve elasticity documentation inconsistency in CLAUDE.md,
-   clarify DRAMA attribution, remove or correct the Ramsey markup paragraph, reconcile
-   compute budget figures.
+3. **Before public release:** Implement real checkpoint loading in `serve.py`,
+   resolve elasticity documentation inconsistency in CLAUDE.md, clarify DRAMA attribution,
+   remove or correct the Ramsey markup paragraph, reconcile compute budget figures.
+4. **For completeness:** Implement entity-factored encoder to enable the flat-vs-entity
+   ablation; implement `inference/planning.py` for inference-time price optimization.
