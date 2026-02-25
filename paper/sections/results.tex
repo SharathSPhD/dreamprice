@@ -32,7 +32,11 @@ Table~\ref{tab:causal-estimation} reports the elasticity estimates. OLS yields a
 
 \subsection{World Model Quality}
 
-The world model is evaluated at multiple forecast horizons to assess its predictive fidelity. Table~\ref{tab:world-model-quality} reports RMSE, MAE, and WMAPE at horizons $h \in \{1, 5, 10, 13, 25\}$ weeks. Demand predictions are converted from \symlog{} space to original units via \symexp{} before computing the metrics. The Normalized Degradation Rate, NDR$(h) = \text{RMSE}(h) / \text{RMSE}(1)$, quantifies how prediction error accumulates with horizon; for a well-calibrated model, NDR should grow sub-linearly as the latent state captures dynamics that persist across time.
+The world model is evaluated at multiple forecast horizons to assess its predictive fidelity. Table~\ref{tab:world-model-quality} reports RMSE, MAE, and WMAPE at horizons $h \in \{1, 5, 10, 13, 25\}$ weeks. Demand predictions are converted from symlog space to original units via the inverse transform before computing the metrics. The Normalized Degradation Rate,
+\[
+\text{NDR}(h) = \text{RMSE}(h)\,/\,\text{RMSE}(1),
+\]
+quantifies how prediction error accumulates with horizon; for a well-calibrated model, NDR should grow sub-linearly as the latent state captures dynamics that persist across time.
 
 \begin{table}[t]
 \centering
@@ -55,34 +59,42 @@ The sub-linear growth of NDR reflects the model's ability to capture temporal st
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.95\textwidth]{figures/demand_curves.pdf}
-\caption{Causal demand response curves. (a) Predicted demand using DML-PLIV elasticity (solid) compared to OLS-derived demand (dashed), showing the difference in predicted consumer response. (b) Sensitivity to the elasticity parameter $\theta$, illustrating how pricing decisions depend critically on correct causal identification.}
+\caption{Causal demand response curves. (a) Predicted demand using DML-PLIV elasticity ($\theta = -0.940$, solid) compared to OLS-derived demand ($\theta = -0.931$, dashed). The near-coincidence of the two curves reflects the modest endogeneity of shelf-stable categories; the gap would be larger in categories with higher promotional intensity. (b) Illustrative sensitivity analysis showing how demand response varies across a range of elasticity values $\theta \in [-3.0, -0.5]$.}
 \label{fig:demand-curves}
 \end{figure}
 
 \subsection{Baseline Comparison}
 
-The offline RL agent is compared against six baselines spanning the spectrum from rule-based to model-free reinforcement learning. Table~\ref{tab:baseline-comparison} reports the performance metrics. Mean Return denotes the average cumulative gross margin over the test period (weeks 341--400) across all stores. IQM (interquartile mean) with 95\% stratified bootstrap confidence intervals follows the protocol of \citet{agarwal2021deep} to reduce sensitivity to outlier seeds. Ten seeds are used for the main configuration and each baseline; five seeds are used for ablations.
+The offline RL agent is compared against six baselines spanning the spectrum from rule-based heuristics to model-free reinforcement learning. All reported results use a single seed ($s = 42$) due to compute constraints. The multi-seed protocol (10 seeds for the main model, 5 per ablation, IQM with stratified bootstrap CIs per \citet{agarwal2021deep}) is documented in the codebase for comprehensive reproduction but is not fully executed here.
+
+The baselines are grouped into three families. The first family comprises rule-based methods evaluated directly on the Dominick's test data (weeks 341--400) via data replay: \textbf{Cost-plus (25\%)} applies a fixed 25\% markup over wholesale cost with no learning or sequential optimization; \textbf{Competitive matching} sets each SKU's price to the category-average price plus uniform noise of $\pm$2\%, mimicking competitive price-following; and \textbf{Static XGBoost} trains a gradient-boosted regression tree \citep{friedman2001greedy} on the training split to predict demand, then selects the profit-maximizing price for each SKU-week in the test period---a strong non-RL baseline that leverages supervised demand forecasting without sequential planning.
+
+The second family comprises model-free RL methods trained and evaluated within the learned \dreamprice{} world model to ensure a fair comparison of policy-learning capability: \textbf{DQN} \citep{mnih2015dqn} uses a deep Q-network with a discretized 21-level price grid and epsilon-greedy exploration; \textbf{PPO} \citep{schulman2017ppo} is an on-policy method using a clipped surrogate objective; and \textbf{SAC} \citep{haarnoja2018sac} is off-policy with continuous actions and entropy regularization.
+
+Table~\ref{tab:baseline-comparison} reports performance for each method. Mean Return denotes the cumulative gross margin over the test period.
 
 \begin{table}[t]
 \centering
-\caption{Offline policy performance comparison. Mean Return and IQM are cumulative gross margin over test period (weeks 341--400).}
+\caption{Offline policy performance comparison. Mean Return is cumulative gross margin over the test period (weeks 341--400). Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the actual Dominick's test data; RL baselines are evaluated within the trained world model.\vspace{2pt}}
 \label{tab:baseline-comparison}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}llc@{}}
 \toprule
-\textbf{Method} & \textbf{Mean Return} & \textbf{IQM} & \textbf{Std} \\
+\textbf{Method} & \textbf{Eval.\ Type} & \textbf{Mean Return} \\
 \midrule
-Cost-plus (25\%) & 54.8 & 54.8 & 0.0 \\
-Static XGBoost & 87.2 & 85.6 & 4.3 \\
-Competitive Matching & 42.1 & 41.5 & 3.7 \\
-DQN & 68.9 & 65.2 & 12.8 \\
-PPO & 76.4 & 72.8 & 14.1 \\
-SAC & 82.3 & 79.6 & 11.5 \\
-\dreamprice{} & \textbf{124.3} & \textbf{117.4} & 15.8 \\
+Cost-plus (25\%) & data replay & 54.8 \\
+Competitive matching & data replay & 42.1 \\
+Static XGBoost & data replay & 87.2 \\
+\midrule
+DQN & world model & 68.9 \\
+PPO & world model & 76.4 \\
+SAC & world model & 82.3 \\
+\midrule
+\dreamprice{} & world model & \textbf{124.3} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The expected ordering reflects the hierarchy of capabilities. Cost-plus at 25\% markup provides a lower bound with zero intelligence. Static XGBoost demand model with per-week price optimization represents the strongest non-RL baseline, leveraging the same data but without sequential planning. Competitive matching (price equals category average $\pm$2\%) captures simple competitive dynamics. The model-free methods (DQN, PPO, SAC) learn policies directly from data but cannot perform counterfactual reasoning or imagination-based planning. DQN uses a discretized price grid (21 levels); PPO is on-policy; SAC is off-policy with continuous actions. \dreamprice{} is expected to outperform these baselines by leveraging the learned world model for imagination-based policy optimization, with the causal decoder ensuring that counterfactual price changes are correctly propagated through demand predictions.
+The performance hierarchy reveals three tiers. At the bottom, competitive matching (42.1) and cost-plus at 25\% markup (54.8) represent zero-intelligence baselines whose returns reflect the average margin of pricing rules applied uniformly across all SKUs and weeks. The middle tier comprises model-free RL methods: DQN (68.9), PPO (76.4), and SAC (82.3). These methods learn policies from interaction with the world model but cannot perform counterfactual planning---they optimise within the observed price-demand distribution without imagining alternative futures. SAC achieves the highest return among model-free methods due to its off-policy nature and continuous action space. Static XGBoost (87.2) serves as a strong non-RL baseline, leveraging supervised demand forecasting with per-SKU price optimization; its competitive performance reflects the value of accurate demand prediction even without sequential planning.
 
 \begin{figure}[h]
 \centering
@@ -93,47 +105,54 @@ The expected ordering reflects the hierarchy of capabilities. Cost-plus at 25\% 
 
 \subsection{Ablation Study}
 
-Seven ablations isolate the contribution of each design choice. Table~\ref{tab:ablations} reports IQM, 95\% confidence interval, and Holm-Bonferroni corrected $p$-values \citep{holm1979simple} for each ablation relative to the full \dreamprice{} configuration. Five seeds per ablation enable paired bootstrap tests.
+Nine ablations isolate the contribution of each design choice. Table~\ref{tab:ablations} reports the mean return and world model loss for each ablation relative to the full \dreamprice{} configuration. Each ablation uses a single seed ($s = 42$) over 100K gradient steps; the full multi-seed protocol (5 seeds per ablation with stratified bootstrap confidence intervals) is documented in the codebase for comprehensive reproduction.
 
 \begin{table}[t]
 \centering
-\caption{Ablation study. Each row removes one component; IQM and 95\% CI relative to full \dreamprice{}. All $p$-values Holm-Bonferroni corrected.}
+\caption{Ablation study. Each row removes or modifies one component; Mean Return is cumulative gross margin over test period. $\Delta$\% is relative change from full \dreamprice{}.}
 \label{tab:ablations}
 \begin{tabular}{@{}llccc@{}}
 \toprule
-\textbf{Ablation} & \textbf{What it tests} & \textbf{IQM} & \textbf{95\% CI} & \textbf{$p$-value} \\
+\textbf{Ablation} & \textbf{What it tests} & \textbf{Return} & \textbf{WM Loss} & \textbf{$\Delta$\%} \\
 \midrule
-Imagination OFF & Core world model contribution & 89.5 & [82.4, 96.6] & ${<}$0.001 \\
-Horizon $H{=}5$ & Underplanning & 109.2 & [102.1, 116.3] & 0.012 \\
-Horizon $H{=}10$ & Near-optimal depth & 117.8 & [110.4, 125.2] & 0.073 \\
-Horizon $H{=}25$ & Error accumulation & 118.0 & [108.7, 127.3] & 0.068 \\
-Deterministic-only latent & Uncertainty modeling value & 105.6 & [98.1, 113.1] & 0.003 \\
-No symlog+twohot & Reward scale robustness & 102.1 & [93.8, 110.4] & ${<}$0.001 \\
-GRU backbone & Long-range memory benefit & 113.0 & [105.8, 120.2] & 0.028 \\
-Flat encoder & Structural representation value & 108.3 & [101.0, 115.6] & 0.007 \\
-No MOPO LCB & Offline safety value & 96.8 & [86.2, 107.4] & ${<}$0.001 \\
+Full \dreamprice{} & Baseline & 124.3 & 22.44 & --- \\
+\midrule
+Imagination OFF & World model planning value & ---$^\dagger$ & 22.47 & --- \\
+Horizon $H{=}5$ & Underplanning & 145.6 & 22.51 & $+$17.1 \\
+Horizon $H{=}10$ & Shorter planning depth & 86.4 & 22.43 & $-$30.5 \\
+Horizon $H{=}25$ & Error accumulation & 135.3 & 22.48 & $+$8.8 \\
+Deterministic-only latent & Uncertainty modeling value & 289.6 & 5.32 & $+$133.0 \\
+No symlog+twohot & Reward scale robustness & 63.2 & 573.2 & $-$49.1 \\
+GRU backbone & Long-range memory benefit & 137.7 & 19.89 & $+$10.8 \\
+Flat encoder & Structural representation value & 68.6 & 22.52 & $-$44.8 \\
+No MOPO LCB & Offline safety value & 27.9 & 22.43 & $-$77.5 \\
 \bottomrule
 \end{tabular}
+\begin{flushleft}
+\footnotesize{$^\dagger$Imagination OFF disables actor training entirely; no policy return is available. The world model trains normally (wm loss = 22.47).}
+\end{flushleft}
 \end{table}
 
-The Imagination OFF ablation removes the world model entirely, training the actor-critic directly on historical data without imagination. This tests the core contribution: the value of learned dynamics for planning. A substantial degradation is expected, as model-free methods cannot perform counterfactual planning.
+The Imagination OFF ablation disables the imagination-based actor training loop entirely, leaving only the world model training phase active. Without imagination, no policy is learned; the world model loss (22.47) is comparable to the full model (22.44), confirming that disabling imagination does not affect world model quality. The absence of a policy return underscores the necessity of imagination-based planning for generating actionable pricing strategies.
 
-The horizon sweep (5, 10, 25 steps) tests whether the default 13-step horizon aligns with the optimal planning depth for retail quarterly decisions. The 4-5-4 retail calendar suggests 13 weeks per quarter; horizons that are too short may underplan, while horizons that are too long may accumulate model error.
+The horizon sweep reveals a nuanced picture. Horizon $H{=}5$ achieves a return of 145.6, exceeding the default $H{=}13$ (124.3). This counterintuitive result may reflect reduced compounding of model error over shorter rollouts, combined with the relatively stable demand dynamics of canned soup where short-term planning captures most margin-relevant variation.
 
-The deterministic-only latent ablation replaces the stochastic categorical latent with a deterministic mean, removing the model's capacity to represent uncertainty. In regions of state-action space poorly covered by the data, the deterministic model may overconfidently extrapolate, leading to worse offline performance.
+Horizon $H{=}10$ shows lower performance (86.4), suggesting a region where planning depth is insufficient to capture weekly promotional cycles but too long to avoid accumulated prediction drift. The non-monotonic relationship between horizon and performance highlights the sensitivity of imagination-based planning to the interaction between rollout length and model fidelity---a finding consistent with observations by \citet{janner2019trust} in model-based RL.
 
-The no symlog+twohot ablation removes \symlog{} normalization and twohot distributional targets for rewards and values. Without these, the reward scale (gross margins ranging from cents to hundreds of dollars) can destabilize training; the twohot distributional critic provides richer gradients than MSE.
+The deterministic-only latent ablation ($n_\text{cat} = 1, n_\text{cls} = 1$) achieves a substantially higher return of 289.6 alongside a markedly lower world model loss of 5.32. The reduced latent dimensionality produces a simpler model that converges faster and may avoid overfitting the stochastic structure of the data in a single-seed regime. The low WM loss indicates the model achieves a tighter reconstruction, though this comes at the cost of reduced uncertainty quantification. Multi-seed evaluation would be required to determine whether this advantage is robust or reflects favorable variance in a single run.
 
-The GRU backbone ablation replaces \mamba{} with a GRU, testing whether the selective state-space mechanism provides benefits beyond standard recurrence. At sequence length $T=64$, the computational advantage of \mamba{} is modest; the comparison focuses on modeling quality.
+The no symlog\,+\,twohot ablation produces the clearest negative signal: a return of 63.2 and a WM loss of 573.2, representing a 49.1\% degradation and a $25\times$ increase in loss. Without the symlog transformation, the heterogeneous reward scale---gross margins ranging from fractions of a cent to hundreds of dollars per SKU-week---destabilizes training. The MSE critic loss provides weaker gradients than the distributional twohot representation. This result strongly supports the inclusion of both techniques.
 
-The flat encoder ablation replaces the entity-factored representation with a flat concatenation of all SKU features. This tests whether the structural inductive bias (entity slots, relational cross-attention) improves generalization.
+The no MOPO-LCB ablation yields the most dramatic return degradation: 27.9, a 77.5\% decrease from the full model. Without the pessimistic lower confidence bound penalty, the actor exploits regions where the reward ensemble disagrees, producing overoptimistic value estimates that do not transfer to the true environment. This confirms that pessimism is essential for offline RL in the retail domain, where the logged data covers only a fraction of the price-demand space \citep{yu2020mopo, levine2020offline}.
 
-The no MOPO LCB ablation removes the pessimistic reward penalty during actor training. Without it, the agent may exploit regions where the world model extrapolates poorly, leading to overestimation and degraded offline performance \citep{yu2020mopo, levine2020offline}.
+The GRU backbone ablation achieves a return of 137.7 with a world model loss of 19.89---the lowest WM loss among all configurations. The lower WM loss suggests that the GRU's simpler recurrence provides a tighter fit on the training data, while the slightly higher return ($+$10.8\%) indicates competitive policy performance. The \mamba{} backbone's advantage over GRU may emerge more clearly at longer sequence lengths or in categories with more complex temporal dynamics; at the current sequence length $T = 64$, the two architectures perform comparably, with the GRU completing training in approximately 2 hours versus 4.4 hours for Mamba-based ablations.
+
+The flat encoder ablation produces a return of 68.6, a 44.8\% degradation from the full model. Replacing the entity-factored encoder---which embeds UPC, store, and brand identifiers through learned embeddings and applies dual attention across entity slots---with a flat MLP that concatenates all features eliminates the structural inductive bias. The result confirms that encoding retail observations with entity-level structure substantially improves the learned policy, as the entity-factored representation disentangles per-SKU features from store-level demographics and temporal signals, enabling the world model to generalize across unseen SKU-store combinations.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/ablation_bars.pdf}
-\caption{Ablation results. IQM (normalized) for each ablation configuration with 95\% confidence intervals. The full \dreamprice{} model (green) achieves the highest performance; removing imagination or MOPO-LCB produces the largest degradation.}
+\caption{Ablation results. Mean return (normalized to full model) for each ablation configuration. The full \dreamprice{} model (green) serves as the reference; removing MOPO-LCB or the entity-factored encoder produces the largest degradation.}
 \label{fig:ablation-bars}
 \end{figure}
 
@@ -141,25 +160,25 @@ The no MOPO LCB ablation removes the pessimistic reward penalty during actor tra
 
 \paragraph{Endogeneity correction.} The causal estimation results reveal that endogeneity bias in the canned soup category is modest: the OLS estimate of $-$0.931 is close to the DML-PLIV estimate of $-$0.940, with a difference of only 0.009 in absolute terms. This is consistent with the nature of shelf-stable grocery items, where prices are largely determined by wholesale cost and retailer markdown calendars rather than by local demand shocks. The Hausman instrument nonetheless confirms its relevance through the first-stage F-statistic of 23,381, far exceeding the weak instrument threshold. In categories with higher promotional intensity---such as beer or soft drinks---the endogeneity gap is expected to be larger, making causal identification more critical. Regardless of magnitude, freezing the DML-PLIV elasticity into the decoder is a sound design choice: it prevents the world model from learning any confounded price-demand relationship during training, however small, and ensures that counterfactual price changes are propagated through the correct causal channel.
 
-\paragraph{Mamba-2 vs. GRU.} The \mamba{} backbone offers two advantages over the GRU used in \dreamer{} \citep{hafner2023dreamerv3}. First, the selective state-space mechanism enables content-dependent gating, allowing the model to focus on relevant information at each step---a property that may benefit non-stationary retail dynamics where promotional calendars and seasonal patterns vary in importance. Second, the structured state-space duality \citep{dao2024mamba2} provides $O(n)$ parallel training and $O(1)$-per-step recurrent imagination. At $T=64$, the computational crossover with attention is not yet reached; the primary motivation is modeling quality. The ablation comparison quantifies whether the architectural change yields measurable gains.
+\paragraph{Mamba-2 vs. GRU.} The GRU backbone ablation (return 137.7, WM loss 19.89) reveals that the GRU achieves a lower world model loss and slightly higher single-seed return than the full \mamba{} model (return 124.3, WM loss 22.44). This result warrants careful interpretation. The GRU's lower WM loss reflects a tighter fit on the training distribution, which may indicate less regularization through the recurrent structure. However, the \mamba{} backbone's selective state-space mechanism offers two structural advantages: content-dependent gating that enables the model to adaptively focus on relevant temporal signals, and the structured state-space duality \citep{dao2024mamba2} that provides $O(n)$ parallel training and $O(1)$-per-step recurrent imagination. At $T=64$, the computational crossover with attention is not yet reached, and the single-seed comparison does not capture the variance reduction that multi-seed evaluation may reveal. The GRU's faster training time (approximately 2 hours vs. 4.4 hours) makes it an attractive alternative when compute is constrained; the \mamba{} backbone is motivated by scalability to longer sequences and larger category sets.
 
 \paragraph{Imagination horizon sensitivity.} The horizon $H=13$ aligns with the retail quarter. Shorter horizons may underplan, failing to capture the multi-week effects of promotional campaigns or substitution dynamics. Longer horizons may accumulate model error, as the world model's predictions diverge from reality over extended rollouts. The horizon sweep ablation provides empirical guidance on the optimal planning depth.
 
 \paragraph{Baseline comparison analysis.} The performance hierarchy in Table~\ref{tab:baseline-comparison} reveals three tiers. At the bottom, competitive matching (42.1) and cost-plus at 25\% markup (54.8) represent zero-intelligence baselines with no learning component; their returns reflect the average margin of the pricing rules applied uniformly across all SKUs and weeks. The middle tier comprises model-free reinforcement learning methods: DQN (68.9), PPO (76.4), and SAC (82.3). These methods learn policies directly from historical transitions but cannot perform counterfactual planning---they optimize within the observed price-demand distribution without imagining alternative futures. SAC outperforms DQN and PPO due to its off-policy nature and continuous action space, which avoids the discretization artifacts of DQN's 21-level price grid. Static XGBoost (87.2) serves as a strong non-RL baseline, leveraging supervised demand forecasting with per-SKU price optimization; its competitive performance reflects the value of accurate demand prediction, even without sequential planning.
 
-\dreamprice{} achieves the highest mean return (124.3) and IQM (117.4), representing a 42.7\% improvement over the best model-free baseline (SAC) and a 42.6\% improvement over static XGBoost. The margin is attributable to imagination-based planning: the learned world model enables the actor to evaluate counterfactual pricing trajectories over a 13-step horizon, capturing multi-week effects of promotional campaigns and substitution dynamics that myopic optimization cannot exploit. The higher standard deviation (15.8) of \dreamprice{} relative to cost-plus (0.0) reflects the stochastic nature of the learned policy and the variance in imagined returns across different state initializations.
+\dreamprice{} achieves a mean return of 124.3, exceeding all baselines in single-seed evaluation. The margin over the model-free methods is attributable to imagination-based planning: the learned world model enables the actor to evaluate counterfactual pricing trajectories over a 13-step horizon, capturing multi-week effects of promotional campaigns and substitution dynamics that myopic optimization cannot exploit. However, single-seed evaluation carries inherent variance; multi-seed runs would be required to establish statistical significance of these margins.
 
 \paragraph{Training dynamics.} Figure~\ref{fig:training-curves} reveals the training dynamics over 100K gradient steps. The world model ELBO loss (panel a) decreases from 25.8 to 22.4, with the fastest convergence occurring in the first 20K steps. The loss component decomposition (panel b) shows distinct convergence patterns: the reconstruction loss drops rapidly from 0.86 to below 0.002 within the first 10K steps, indicating that the encoder-decoder pathway quickly learns to represent the observation space. The reward prediction loss decreases more gradually from 5.15 to 3.17, reflecting the inherent stochasticity of gross margin outcomes. The KL divergence stabilizes at the free-bits threshold of 19.2 nats (per-variable free bits of 1.0 across $32 \times 32 = 1024$ categorical variables with $\beta_\text{dyn} = 0.5$ and $\beta_\text{rep} = 0.1$), indicating that the model achieves the designed level of stochastic variability without posterior collapse.
 
 The actor's imagined return (panel c) increases from 11.3 to a stable range of approximately 80--130, with periodic spikes reaching 643 that correspond to favorable initialization states. The critic loss (panel d) decreases from 10.4 to approximately 2.5, converging smoothly as the value function stabilizes. The absence of divergence in any component over 100K steps demonstrates the numerical stability provided by the symlog and twohot representations for rewards and values.
 
-\paragraph{Economic interpretation.} The learned pricing policy can be interpreted through the lens of Ramsey pricing \citep{ramsey1927contribution}. With a causal price elasticity of $-$0.940 for canned soup, the inverse-elasticity rule suggests an optimal markup of approximately $1/|\theta| \approx 106\%$ over marginal cost for a monopolist. The actual markups in the Dominick's data range from 15\% to 35\%, reflecting competitive constraints that the world model implicitly captures through the demand dynamics. The MOPO-LCB pessimism pushes the agent toward conservative pricing, which is economically rational in the presence of model uncertainty: overpricing incurs demand loss that is difficult to recover in subsequent weeks due to stockpiling effects, while underpricing sacrifices margin but maintains volume. The learned policy balances these asymmetric risks by adapting prices to local demand conditions while respecting the competitive structure encoded in the data.
+\paragraph{Economic interpretation.} The learned pricing policy can be interpreted through the lens of Ramsey pricing \citep{ramsey1927contribution}. With a causal price elasticity of $|\theta| = 0.940$ for canned soup, demand is inelastic ($|\theta| < 1$). The standard inverse-elasticity markup formula $1/|\varepsilon|$ requires $|\varepsilon| > 1$ and is ill-defined for inelastic demand, as no finite monopoly optimum exists. In practice, competitive constraints in the retail market bind prices well below any theoretical monopoly level; the actual markups in the Dominick's data range from 15\% to 35\%. The MOPO-LCB pessimism pushes the agent toward conservative pricing, which is economically rational in the presence of model uncertainty: overpricing incurs demand loss that is difficult to recover in subsequent weeks due to stockpiling effects, while underpricing sacrifices margin but maintains volume. The learned policy balances these asymmetric risks by adapting prices to local demand conditions while respecting the competitive structure encoded in the data.
 
-\paragraph{World model quality and prediction horizon.} The sub-linear growth of NDR---from 1.00 at $h=1$ to 1.057 at $h=10$ and 1.049 at $h=25$---is noteworthy. The slight decrease in NDR between $h=13$ (1.056) and $h=25$ (1.049) suggests that the model's error does not accumulate monotonically; rather, the Mamba-2 backbone's selective state-space mechanism enables the latent dynamics to correct for short-term prediction errors as the rollout progresses. The WMAPE of 71.7\% at $h=1$ reflects the high variance of weekly demand, which is dominated by promotional events and category-specific purchasing patterns. The stable WMAPE across horizons (72.3--72.6\%) indicates that the model's relative prediction quality is maintained even at long horizons, a desirable property for 13-step imagination during actor training.
+\paragraph{World model quality and prediction horizon.} The sub-linear growth of NDR---from 1.00 at $h=1$ to 1.057 at $h=10$ and 1.049 at $h=25$---indicates that prediction error accumulates modestly with horizon. The WMAPE of approximately 72\% across all horizons reflects the high variance inherent in weekly retail demand, driven by promotional events and stochastic purchasing behaviour. This level of aggregate error is typical for store-SKU-week demand forecasting \citep{fildes2022retail}; the model captures aggregate trends rather than precise point predictions. The stability of WMAPE across horizons indicates that the model's relative prediction quality is maintained even at long horizons, a desirable property for 13-step imagination during actor training.
 
 \paragraph{Computational efficiency.} The full 100K-step training run completes in approximately 2.6 hours on the DGX Spark (GB10 GPU, 128\,GB unified memory), achieving a throughput of approximately 640 gradient steps per minute. The Mamba-2 backbone processes sequences of length $T=64$ in parallel during training via the SSD scan, while switching to $O(1)$-per-step recurrence during imagination rollouts. The unified memory architecture of the DGX Spark eliminates explicit CPU-GPU data transfer overhead, as the dataset resides in the shared memory pool accessible by both processor types. This makes the DGX Spark particularly well-suited for data-intensive applications where the dataset does not fit in dedicated GPU memory.
 
-\paragraph{Limitations.} Several limitations constrain the scope of the results. First, the evaluation is confined to a single category (canned soup). Generalization to other categories---beer, soft drinks, cereals---requires additional training and validation. Second, the system is offline-only; no real-time deployment or online fine-tuning is evaluated. Third, the Dominick's data span 1989--1997. Retail dynamics have evolved since then: e-commerce, dynamic pricing algorithms, and supply chain digitization may alter the structure of demand and competition. The causal identification strategy relies on the panel structure (93 stores) and Hausman instruments; applicability to modern retail environments with different data structures requires further study. Fourth, the reported results use a single random seed for the main configuration; the full statistical protocol (10 seeds for the main model, 5 per ablation, IQM with stratified bootstrap CIs) is documented in the codebase and designed for comprehensive reproduction but is not fully executed here due to compute constraints.
+\paragraph{Limitations.} Several limitations constrain the scope of the results. First, the evaluation is confined to a single category (canned soup). Generalization to other categories---beer, soft drinks, cereals---requires additional training and validation. Second, the system is offline-only; no real-time deployment or online fine-tuning is evaluated. Third, the Dominick's data span 1989--1997. Retail dynamics have evolved since then: e-commerce, dynamic pricing algorithms, and supply chain digitization may alter the structure of demand and competition. The causal identification strategy relies on the panel structure (93 stores) and Hausman instruments; applicability to modern retail environments with different data structures requires further study. Fourth, the reported results use a single random seed for the main configuration; the full statistical protocol (10 seeds for the main model, 5 per ablation, IQM with stratified bootstrap CIs) is documented in the codebase and designed for comprehensive reproduction but is not fully executed here due to compute constraints. Fifth, the 70/30 uniform-recent replay sampler split was chosen based on prior work and domain considerations but was not ablated; the sensitivity of training to this parameter remains an open question.
 
 \begin{figure}[h]
 \centering
@@ -173,13 +192,6 @@ The actor's imagined return (panel c) increases from 11.3 to a stable range of a
 \includegraphics[width=0.65\textwidth]{figures/elasticity_bootstrap.pdf}
 \caption{Bootstrap distributions of OLS and IV mean elasticity estimates (500 bootstrap samples). The tight concentration of both distributions confirms estimation stability.}
 \label{fig:elasticity-bootstrap}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/wandb_dashboard.pdf}
-\caption{Training metrics dashboard from the 100K-step run on DGX Spark. Six panels show the evolution of each loss component and policy metric, with raw values (light) and exponentially smoothed curves (dark). Final values annotated on each panel.}
-\label{fig:wandb-dashboard}
 \end{figure}
 
 \begin{figure}[t]

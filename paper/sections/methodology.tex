@@ -11,8 +11,8 @@ Retail pricing is formulated as a partially observable Markov decision process (
 \label{def:pomdp}
 A retail pricing POMDP is a tuple $(\mathcal{S}, \mathcal{X}, \mathcal{A}, \mathcal{T}, \mathcal{O}, \mathcal{R}, \gamma)$ where:
 \begin{itemize}[leftmargin=*]
-\item $\mathcal{S}$ is the latent state space: $s_t = (\text{demand\_state}, \text{competitor\_state}, \text{seasonal\_state})$.
-\item $\mathcal{X}$ is the observation space: $x_t = (\text{prices}, \text{units\_sold}, \text{promotions}, \text{demographics}, \ldots)$.
+\item $\mathcal{S}$ is the latent state space comprising demand, competitor, and seasonal components.
+\item $\mathcal{X}$ is the observation space: per-SKU prices, units sold, promotions, demographics, and derived features.
 \item $\mathcal{A} = \{0.90, 0.91, \ldots, 1.10\}^K$ is the action space of discrete price multipliers.
 \item $\mathcal{T}(s_{t+1} \mid s_t, a_t)$ is the unknown transition kernel.
 \item $\mathcal{O}(x_t \mid s_t)$ is the observation model.
@@ -25,19 +25,88 @@ The objective is to learn a world model that approximates $\mathcal{T}$ and $\ma
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{figures/architecture.pdf}
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=0.7cm and 1.2cm,
+  box/.style={draw, rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm, align=center, font=\small},
+  inputbox/.style={box, fill=blue!8, draw=blue!60!black},
+  encoderbox/.style={box, fill=green!10, draw=green!50!black},
+  backbonebox/.style={box, fill=violet!12, draw=violet!60!black, minimum width=3.0cm, minimum height=0.9cm},
+  decoderbox/.style={box, fill=red!8, draw=red!50!black},
+  rewardbox/.style={box, fill=orange!10, draw=orange!60!black},
+  headbox/.style={box, fill=teal!10, draw=teal!60!black},
+  priorbox/.style={box, fill=blue!8, draw=blue!60!black},
+  arr/.style={-{Stealth[length=2.5mm]}, thick},
+  garr/.style={-{Stealth[length=2.5mm]}, thick, gray!70},
+  lbl/.style={font=\scriptsize, text=gray!70},
+]
+% Input
+\node[inputbox] (obs) {$x_t$};
+\node[lbl, above=0.05cm of obs] {observation};
+
+% Encoder
+\node[encoderbox, below=0.8cm of obs] (enc) {ObsEncoder\\(or EntityEncoder)};
+\draw[arr, green!50!black] (obs) -- node[lbl,right,xshift=1pt] {$\operatorname{symlog}(x_t)$} (enc);
+
+% Posterior
+\node[lbl, below=0.3cm of enc] (zpost) {$z_t \sim q(z_t \mid x_t)$};
+
+% Action
+\node[inputbox, left=1.8cm of enc] (act) {$a_{t-1}$};
+\node[lbl, above=0.05cm of act] {prev.\ action};
+
+% Concat
+\node[box, fill=gray!8, draw=gray!50, below=1.0cm of enc] (cat) {concat};
+\draw[arr, green!50!black] (enc) -- (cat);
+\draw[arr, blue!60!black] (act) |- (cat);
+
+% Backbone
+\node[backbonebox, below=0.8cm of cat] (mamba) {\textsc{Mamba-2} SSD\\$h_t = f(h_{t-1}, z_{t-1}, a_{t-1})$};
+\draw[arr, violet!60!black] (cat) -- (mamba);
+
+% Prior
+\node[priorbox, below left=0.9cm and 0.0cm of mamba] (prior) {Prior MLP};
+\node[lbl, below=0.15cm of prior] {$\hat{z}_t \sim p(z_t \mid h_t)$};
+\draw[arr, blue!60!black] (mamba.south) -- ++(0,-0.3) -| (prior.north);
+
+% Decoders - right side
+\node[decoderbox, right=2.5cm of mamba, yshift=0.8cm] (demand) {CausalDemand\\Decoder};
+\node[lbl, right=0.1cm of demand, text=red!50!black, font=\scriptsize\itshape] {frozen $\theta$};
+
+\node[rewardbox, right=2.5cm of mamba, yshift=-0.3cm] (reward) {RewardEnsemble\\$\times 5$};
+\node[lbl, right=0.1cm of reward, font=\scriptsize\itshape] {MOPO-LCB};
+
+\node[headbox, right=2.5cm of mamba, yshift=-1.4cm] (cont) {ContinueHead};
+
+\node[encoderbox, right=2.5cm of mamba, yshift=-2.3cm] (obsdec) {ObsDecoder};
+
+% Arrows from backbone to decoders
+\draw[garr] (mamba.east) -- ++(0.6,0) |- (demand.west);
+\draw[garr] (mamba.east) -- ++(0.6,0) |- (reward.west);
+\draw[garr] (mamba.east) -- ++(0.6,0) |- (cont.west);
+\draw[garr] (mamba.east) -- ++(0.6,0) |- (obsdec.west);
+
+% DRAMA annotation
+\node[lbl, left=0.3cm of enc, text=violet!60!black, font=\scriptsize\itshape, align=right] {DRAMA:\\$q(z_t\mid x_t)$ only};
+
+% Mode annotation
+\node[lbl, left=0.3cm of mamba, align=right, font=\scriptsize\itshape] {parallel SSD (train)\\recurrent step (imagine)};
+
+\end{tikzpicture}%
+}
 \caption{Overview of the \dreamprice{} architecture. The encoder produces the posterior $z_t$ from the observation alone (DRAMA-style decoupled posterior). The \mamba{} backbone processes sequences in parallel during training (SSD scan) and recurrently during imagination. The causal demand decoder freezes DML-PLIV elasticities; the 5-head reward ensemble provides MOPO-LCB pessimism.}
 \label{fig:architecture}
 \end{figure}
 
 \subsection{RSSM Architecture}
 
-The recurrent state-space model (RSSM) at the core of \dreamprice{} consists of two components: a deterministic recurrent state $h_t$ and a stochastic latent $z_t$. The deterministic state $h_t$ is produced by the backbone (a \mamba{} selective state-space model that replaces the GRU of standard \dreamer{} \citep{hafner2023dreamerv3}). The stochastic latent $z_t$ follows a categorical distribution over 32 independent categorical variables, each with 32 classes, yielding a latent dimension of 1024. The posterior $q(z_t \mid x_t)$ is computed from the observation alone via the encoder, without conditioning on $h_t$; this decoupling is the DRAMA-style design that enables parallel training \citep{rajbhandari2024drama}. The prior $p(z_t \mid h_t)$ is computed from the backbone output $h_t$ via an MLP head.
+The recurrent state-space model (RSSM) at the core of \dreamprice{} consists of two components: a deterministic recurrent state $h_t$ and a stochastic latent $z_t$. The deterministic state $h_t$ is produced by the backbone (a \mamba{} selective state-space model that replaces the GRU of standard \dreamer{} \citep{hafner2023dreamerv3}). The stochastic latent $z_t$ follows a categorical distribution over 32 independent categorical variables, each with 32 classes, yielding a latent dimension of 1024. Inspired by the decoupling principle in DRAMA \citep{rajbhandari2024drama}, the posterior $q(z_t \mid x_t)$ is computed from the observation alone via the encoder, without conditioning on $h_t$, which enables parallel training. The prior $p(z_t \mid h_t)$ is computed from the backbone output $h_t$ via an MLP head.
 
 Formally, the model is specified as follows. The backbone receives the concatenation of the previous latent $z_{t-1}$ and the previous action $a_{t-1}$, and produces the deterministic state:
 \begin{equation}
-h_t = f_{\text{backbone}}(h_{t-1}, z_{t-1}, a_{t-1}) \quad \text{[\mamba{} SSD]}
+h_t = f_{\text{backbone}}(h_{t-1}, z_{t-1}, a_{t-1})
 \end{equation}
+where the backbone uses the \mamba{} SSD.\footnote{In the Mamba-2 implementation, the SSM state is maintained implicitly by the inference cache rather than passed as an explicit hidden vector. The mathematical notation uses $h_t$ for clarity.}
 The posterior over the stochastic latent depends only on the current observation:
 \begin{equation}
 z_t \sim q(z_t \mid x_t) = \text{Categorical}(32 \times 32, \text{straight-through} + \text{unimix})
@@ -65,10 +134,12 @@ where $\bar{A}_t, \bar{B}_t$ are derived from discretized SSM parameters that de
 
 In the standard \dreamer{} architecture, the posterior over the stochastic latent depends on both the observation and the recurrent state: $q(z_t \mid x_t, h_t)$ \citep{hafner2023dreamerv3}. This creates a sequential dependency: to compute $z_t$, one must first compute $h_t$, which depends on $z_{t-1}$ and the backbone recurrence. As a consequence, the backbone cannot be run in parallel over the full sequence during training, because each $h_t$ depends on the preceding $h_{t-1}$ and $z_{t-1}$.
 
-The DRAMA insight \citep{rajbhandari2024drama} is to decouple the posterior from the recurrent state: $q(z_t \mid x_t)$ only. The posterior now depends solely on the observation $x_t$, which is available for all $t$ in the training batch. The backbone can compute $h_t$ for all $t$ in parallel, given the sequence of $z_t$ and $a_t$ (which are computed in a first pass from the encoder). The prior $p(z_t \mid h_t)$ still depends on $h_t$, so the KL divergence between posterior and prior provides a learning signal for the backbone. The ELBO derivation remains valid: the objective is
-\begin{equation}
-\mathcal{L} = \E_{q(z_{1:T} \mid x_{1:T})} \left[ \sum_{t=1}^{T} \left( \log p(x_t \mid z_t) + \log p(r_t \mid h_t) - \beta_{\text{dyn}} \KL[\sg(q(z_t \mid x_t)) \| p(z_t \mid h_t)] - \beta_{\text{rep}} \KL[q(z_t \mid x_t) \| \sg(p(z_t \mid h_t))] \right) \right]
-\end{equation}
+Extending the DRAMA decoupling idea \citep{rajbhandari2024drama} to the RSSM posterior, we have $q(z_t \mid x_t)$ only. The posterior now depends solely on the observation $x_t$, which is available for all $t$ in the training batch. The backbone can compute $h_t$ for all $t$ in parallel, given the sequence of $z_t$ and $a_t$ (which are computed in a first pass from the encoder). The prior $p(z_t \mid h_t)$ still depends on $h_t$, so the KL divergence between posterior and prior provides a learning signal for the backbone. The ELBO derivation remains valid: the objective is
+\begin{multline}
+\mathcal{L} = \E_{q(z_{1:T} \mid x_{1:T})} \Bigl[ \sum_{t=1}^{T} \bigl( \log p(x_t \mid z_t) + \log p(r_t \mid h_t) \\
+ - \beta_{\text{dyn}} \KL[\sg(q(z_t \mid x_t)) \| p(z_t \mid h_t)]
+ - \beta_{\text{rep}} \KL[q(z_t \mid x_t) \| \sg(p(z_t \mid h_t))] \bigr) \Bigr]
+\end{multline}
 where $\sg$ denotes the stop-gradient operator. The dynamics loss trains the prior (and thus the backbone) by matching $\sg(q)$ to $p$; the representation loss trains the encoder by matching $q$ to $\sg(p)$. The KL terms still provide gradients to the backbone because $p(z_t \mid h_t)$ depends on $h_t$, and the backbone produces $h_t$.
 
 \subsection{Observation Encoder and Decoder}
@@ -85,9 +156,9 @@ A central challenge in retail pricing is endogeneity: prices and demand are simu
 
 The \dreamprice{} decoder addresses this by constraining the price-demand relationship to causal estimates. The demand model is:
 \begin{equation}
-\text{demand} = \theta(c_{\text{id}}) \cdot \log(\text{price}) + \text{MLP}(z_t, \text{store\_features})
+\text{demand} = \theta(c_{\text{id}}) \cdot \symlog(\text{price}) + \text{MLP}(z_t, \text{store\_features})
 \end{equation}
-where $\theta(c_{\text{id}})$ is the per-category price elasticity, \textbf{frozen} from pre-estimation, and the MLP residual learns the remainder: seasonality, demographics, promotion effects, and latent-state dynamics. The elasticity $\theta$ is estimated via DML-PLIV (double machine learning for partially linear instrumental variables) \citep{chernozhukov2018dml} and is not updated during world model training.
+where $\theta(c_{\text{id}})$ is the per-category price elasticity, \textbf{frozen} from pre-estimation, and the MLP residual learns the remainder: seasonality, demographics, promotion effects, and latent-state dynamics. The $\symlog$ transform ensures that the causal price term operates on the same scale as the encoder and decoder targets; the elasticity parameter $\theta$ retains its causal interpretation as $\partial \symlog(\text{demand}) / \partial \symlog(\text{price})$. The elasticity $\theta$ is estimated via DML-PLIV (double machine learning for partially linear instrumental variables) \citep{chernozhukov2018dml} and is not updated during world model training.
 
 The Hausman IV instrument exploits the panel structure of the Dominick's data \citep{dominicks1999}. For each (UPC, store, week), the instrument is the mean of $\log(\text{price})$ across all \emph{other} stores for the same UPC-week. Formally, $Z_{j,s,t} = (1/(n-1)) \sum_{s' \neq s} \log(\text{price}_{j,s',t})$, where $n$ is the number of stores. This is relevant (prices are correlated across stores due to common wholesale costs) and plausibly exogenous to store-specific demand shocks (local demand shocks are assumed independent across stores after controlling for fixed effects). With 83 stores, the first-stage F-statistic is well above 100, far exceeding the weak instrument threshold of 10.
 
@@ -95,7 +166,7 @@ DML-PLIV combines the Hausman IV with double machine learning for nuisance param
 
 As a robustness check, the 2sCOPE copula correction \citep{park2010copula} can be applied. This transforms price to a standard normal quantile and uses the residual as a control; identification relies on non-normality of the endogenous regressor. If DML-PLIV and 2sCOPE estimates diverge substantially, this may indicate correlated demand shocks (threatening the Hausman exclusion) or non-Gaussianity issues (threatening the copula assumption).
 
-For Dominick's grocery categories, the expected elasticity range is $[-3.0, -2.0]$ \citep{hoch1995determinants, nevo2001measuring}. The frozen $\theta$ in the decoder ensures the world model cannot learn confounded elasticities during training.
+For Dominick's grocery categories, elasticity magnitudes vary by category: shelf-stable goods such as canned soup exhibit inelastic demand ($|\theta| \approx 0.9$), while more substitutable categories (beer, soft drinks) show higher sensitivity ($|\theta| \approx 2.0$--$3.0$) \citep{hoch1995determinants, nevo2001measuring}. The frozen $\theta$ in the decoder ensures the world model cannot learn confounded elasticities during training.
 
 \subsection{Reward Ensemble and MOPO Pessimism}
 
