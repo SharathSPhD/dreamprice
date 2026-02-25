@@ -12,7 +12,6 @@ import json
 import sys
 from pathlib import Path
 
-import gymnasium as gym
 import numpy as np
 import torch
 
@@ -42,8 +41,7 @@ def load_world_model(checkpoint_path: str, device: str = "cpu"):
 def make_env(world_model, wrapper: str = "discrete", seed: int = 42):
     """Create GroceryPricingEnv backed by the trained world model."""
     sys.path.insert(0, "/workspace/src")
-    from retail_world_model.envs.grocery import GroceryPricingEnv
-
+    from retail_world_model.envs.grocery import GroceryPricingEnv  # noqa: I001
     from sb3_wrapper import ContinuousActionWrapper, FlatDiscreteWrapper
 
     rng = np.random.default_rng(seed)

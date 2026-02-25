@@ -10,7 +10,6 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 
@@ -62,7 +61,9 @@ def main() -> None:
 
     print("Loading Dominick's CSO test data (weeks 341-400)...")
     test_df = load_test_data(args.data_dir)
-    print(f"  {len(test_df)} rows, {test_df['WEEK'].nunique()} weeks, {test_df['UPC'].nunique()} UPCs")
+    n_rows, n_weeks = len(test_df), test_df["WEEK"].nunique()
+    n_upcs = test_df["UPC"].nunique()
+    print(f"  {n_rows} rows, {n_weeks} weeks, {n_upcs} UPCs")
 
     results = run_cost_plus(test_df, args.markup)
     print(f"Cost-plus ({args.markup:.0%}): mean return = {results['mean_return']:.2f}")

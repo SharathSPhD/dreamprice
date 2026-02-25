@@ -87,8 +87,10 @@ class DreamerTrainer:
         """Phase A: world model update."""
         self.opt_wm.zero_grad()
         losses = elbo_loss(
-            batch, self.model,
-            use_symlog=self.use_symlog, use_twohot=self.use_twohot,
+            batch,
+            self.model,
+            use_symlog=self.use_symlog,
+            use_twohot=self.use_twohot,
         )
         losses["total"].backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_wm)
@@ -218,7 +220,9 @@ class DreamerTrainer:
                 entity_ids = None
                 if "store_id" in batch and "month_ids" in batch:
                     entity_ids = {
-                        "store_ids": batch["store_id"].unsqueeze(1).expand(-1, batch["x_BT"].shape[1]),
+                        "store_ids": batch["store_id"]
+                        .unsqueeze(1)
+                        .expand(-1, batch["x_BT"].shape[1]),
                         "month_ids": batch["month_ids"],
                     }
                 output = self.model.forward(batch["x_BT"], batch["a_BT"], entity_ids=entity_ids)  # type: ignore[union-attr]

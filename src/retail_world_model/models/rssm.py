@@ -123,9 +123,7 @@ class RSSM(nn.Module):
         """Route through ObsEncoder or EntityEncoder based on config."""
         if self.encoder_type == "entity" and isinstance(self.obs_encoder, EntityEncoder):
             ids = entity_ids or {}
-            default_ids = torch.zeros(
-                *x_t.shape[:-1], dtype=torch.long, device=x_t.device
-            )
+            default_ids = torch.zeros(*x_t.shape[:-1], dtype=torch.long, device=x_t.device)
             return self.obs_encoder(
                 upc_ids=ids.get("upc_ids", default_ids),
                 store_ids=ids.get("store_ids", default_ids),

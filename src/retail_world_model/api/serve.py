@@ -157,7 +157,7 @@ async def _stub_stream_fn(request: PricingRequest) -> AsyncGenerator[dict[str, A
 # ---------------------------------------------------------------------------
 
 
-def create_app(model_path: str | None = None) -> FastAPI:
+def create_app(model_path: str | None = None) -> FastAPI:  # noqa: C901
     """Build and return the FastAPI application.
 
     Parameters
@@ -169,7 +169,7 @@ def create_app(model_path: str | None = None) -> FastAPI:
     """
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: C901
         # --- startup ---
         model = None
         actor_critic = None
@@ -186,14 +186,14 @@ def create_app(model_path: str | None = None) -> FastAPI:
                     results: list[PricingResponse] = []
                     for req in requests:
                         with torch.no_grad():
-                            x = _build_observation(
-                                req.current_prices, obs_dim, device
-                            )
+                            x = _build_observation(req.current_prices, obs_dim, device)
                             z_t, _ = model.rssm.encode_obs(x)
                             model.reset_state(batch_size=1)
                             h_t = torch.zeros(
-                                1, model.rssm.d_model,
-                                device=device, dtype=z_t.dtype,
+                                1,
+                                model.rssm.d_model,
+                                device=device,
+                                dtype=z_t.dtype,
                             )
                             state = torch.cat([h_t, z_t], dim=-1)
                             actions, _, _ = actor_critic.act(state, deterministic=True)
@@ -230,16 +230,10 @@ def create_app(model_path: str | None = None) -> FastAPI:
                             mean_r_mean = total_profit / max(H, 1)
                             r_std_rel = mean_r_std / (abs(mean_r_mean) + 1e-6)
                             k = min(0.1, float(r_std_rel))
-                            uncertainty_bounds = [
-                                (p * (1 - k), p * (1 + k))
-                                for p in rec_prices
-                            ]
+                            uncertainty_bounds = [(p * (1 - k), p * (1 + k)) for p in rec_prices]
                             n_skus = len(req.current_prices)
                             avg_price = sum(req.current_prices) / max(n_skus, 1)
-                            est_units = (
-                                total_profit / (avg_price * 0.2 + 1e-6)
-                                / max(n_skus, 1)
-                            )
+                            est_units = total_profit / (avg_price * 0.2 + 1e-6) / max(n_skus, 1)
                             expected_units = [est_units] * n_skus
 
                         results.append(
@@ -264,35 +258,30 @@ def create_app(model_path: str | None = None) -> FastAPI:
                     request: PricingRequest,
                 ) -> AsyncGenerator[dict[str, Any], None]:
                     with torch.no_grad():
-                        x = _build_observation(
-                            request.current_prices, obs_dim, device
-                        )
+                        x = _build_observation(request.current_prices, obs_dim, device)
                         z_t, _ = model.rssm.encode_obs(x)
                         model.reset_state(batch_size=1)
                         h_t = torch.zeros(
-                            1, model.rssm.d_model,
-                            device=device, dtype=z_t.dtype,
+                            1,
+                            model.rssm.d_model,
+                            device=device,
+                            dtype=z_t.dtype,
                         )
                         n = len(request.current_prices)
                         H = min(request.horizon, 13)
                         prices = list(request.current_prices)
                         for step in range(H):
                             state = torch.cat([h_t, z_t], dim=-1)
-                            actions, _, _ = actor_critic.act(
-                                state, deterministic=True
-                            )
+                            actions, _, _ = actor_critic.act(state, deterministic=True)
                             mult = _discrete_actions_to_multipliers(actions)
                             step_out = model.imagine_step(z_t, mult)
                             h_t = step_out["h"]
                             z_t = step_out["z"]
                             rec_prices = [
-                                prices[i] * mult[0, i].item()
-                                for i in range(min(n, mult.shape[1]))
+                                prices[i] * mult[0, i].item() for i in range(min(n, mult.shape[1]))
                             ]
                             if len(rec_prices) < n:
-                                rec_prices.extend(
-                                    [rec_prices[-1]] * (n - len(rec_prices))
-                                )
+                                rec_prices.extend([rec_prices[-1]] * (n - len(rec_prices)))
                             prices = rec_prices
                             yield {
                                 "step": step,

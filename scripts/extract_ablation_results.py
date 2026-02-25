@@ -70,10 +70,7 @@ def extract_from_wandb():
                 }
             ret_str = f"{ret_val:.2f}" if ret_val is not None else "N/A"
             wm_str = f"{wm_val:.2f}"
-            print(
-                f"  {abl_name}: return={ret_str}, "
-                f"wm_loss={wm_str}, step={step_val}"
-            )
+            print(f"  {abl_name}: return={ret_str}, wm_loss={wm_str}, step={step_val}")
 
     return results
 

@@ -705,8 +705,12 @@ def fig_policy_heatmap():
 
     fig, ax = plt.subplots(figsize=(10, 4.5))
     im = ax.imshow(
-        base, aspect="auto", cmap="RdYlGn",
-        interpolation="nearest", vmin=-0.5, vmax=0.5,
+        base,
+        aspect="auto",
+        cmap="RdYlGn",
+        interpolation="nearest",
+        vmin=-0.5,
+        vmax=0.5,
     )
     ax.set_xlabel("Test Week (relative)")
     ax.set_ylabel("Store Index")
@@ -750,8 +754,14 @@ def fig_reward_distribution():
     z = np.polyfit(actual, predicted, 1)
     p = np.poly1d(z)
     x_fit = np.linspace(lims[0], lims[1], 100)
-    ax.plot(x_fit, p(x_fit), "-", color=COLORS["red"], linewidth=1.5,
-            label=f"Fit: y={z[0]:.2f}x+{z[1]:.1f}")
+    ax.plot(
+        x_fit,
+        p(x_fit),
+        "-",
+        color=COLORS["red"],
+        linewidth=1.5,
+        label=f"Fit: y={z[0]:.2f}x+{z[1]:.1f}",
+    )
     corr = np.corrcoef(actual, predicted)[0, 1]
     ax.set_xlabel("Actual Reward")
     ax.set_ylabel("Predicted Reward")
@@ -784,10 +794,18 @@ def fig_imagination_rollout():
         std = np.abs(np.random.normal(0, 1.5, H)) * np.sqrt(t + 1)
 
         ax.plot(t, actual, "o-", color=COLORS["blue"], linewidth=1.5, markersize=4, label="Actual")
-        ax.plot(t, predicted, "s--", color=COLORS["orange"], linewidth=1.5, markersize=4,
-                label="Imagined")
-        ax.fill_between(t, predicted - 2 * std, predicted + 2 * std,
-                        alpha=0.15, color=COLORS["orange"])
+        ax.plot(
+            t,
+            predicted,
+            "s--",
+            color=COLORS["orange"],
+            linewidth=1.5,
+            markersize=4,
+            label="Imagined",
+        )
+        ax.fill_between(
+            t, predicted - 2 * std, predicted + 2 * std, alpha=0.15, color=COLORS["orange"]
+        )
         ax.set_xlabel("Rollout Step")
         ax.set_ylabel("Demand (units)")
         ax.set_title(f"SKU Example {i + 1} (base ≈ {base:.0f})")

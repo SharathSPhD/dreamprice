@@ -105,8 +105,9 @@ def main() -> None:
         default=Path("/workspace/docs/data"),
     )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--max-test-rows", type=int, default=5000,
-                        help="Subsample test rows for tractability")
+    parser.add_argument(
+        "--max-test-rows", type=int, default=5000, help="Subsample test rows for tractability"
+    )
     parser.add_argument(
         "--output",
         type=Path,
@@ -124,7 +125,7 @@ def main() -> None:
     if args.max_test_rows and len(test_df) > args.max_test_rows:
         test_sample = test_df.sample(args.max_test_rows, random_state=args.seed)
         scale_factor = len(test_df) / args.max_test_rows
-        print(f"  Subsampled test to {args.max_test_rows} rows (scale factor: {scale_factor:.1f}x)")
+        print(f"  Subsampled to {args.max_test_rows} rows (scale={scale_factor:.1f}x)")
     else:
         test_sample = test_df
         scale_factor = 1.0
