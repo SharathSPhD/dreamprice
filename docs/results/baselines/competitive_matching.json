@@ -1,0 +1,9 @@
+{
+  "method": "competitive_matching",
+  "noise_pct": 0.02,
+  "total_gross_margin": 2296041.001669776,
+  "mean_return": 45020.41179744659,
+  "n_rows": 483848,
+  "n_weeks": 51,
+  "eval_type": "data_replay"
+}

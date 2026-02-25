@@ -455,52 +455,65 @@ def fig_wandb_dashboard():
 
 
 def fig_ablation_bars():
-    """Ablation study bar chart with directional results."""
-    ablations = [
-        ("Full\nDreamPrice", 124.3, 8.2),
-        ("No\nImagination", 89.5, 11.4),
-        ("H=5", 109.2, 9.1),
-        ("H=10", 117.8, 8.7),
-        ("H=25", 118.0, 10.3),
-        ("Deterministic\nLatent", 105.6, 9.5),
-        ("No symlog\n+twohot", 102.1, 10.8),
-        ("GRU\nBackbone", 113.0, 9.0),
-        ("Flat\nEncoder", 108.3, 8.8),
-        ("No MOPO\nLCB", 96.8, 13.6),
+    """Ablation study bar chart with real single-seed results."""
+    ablation_dir = Path("docs/results/ablations")
+    baseline_return = 124.3
+
+    ablation_defs = [
+        ("Full\nDreamPrice", baseline_return),
+        ("No MOPO\nLCB", "no_mopo_lcb"),
+        ("No symlog\n+twohot", "no_symlog_twohot"),
+        ("H=10", "horizon_10"),
+        ("H=5", "horizon_5"),
+        ("Deterministic\nLatent", "no_stochastic_latent"),
+        ("H=25", "horizon_25"),
+        ("GRU\nBackbone", "gru_backbone"),
+        ("Flat\nEncoder", "flat_encoder"),
     ]
 
-    names = [a[0] for a in ablations]
-    returns = np.array([a[1] for a in ablations])
-    errs = np.array([a[2] for a in ablations])
+    names = []
+    returns = []
+    for label, src in ablation_defs:
+        if isinstance(src, (int, float)):
+            names.append(label)
+            returns.append(src)
+        else:
+            json_path = ablation_dir / f"{src}.json"
+            if json_path.exists():
+                data = json.loads(json_path.read_text())
+                ret = data.get("episode_rewards", [None])[0]
+                if ret is not None and data.get("status") == "completed":
+                    names.append(label)
+                    returns.append(float(ret))
 
-    normalized = returns / returns[0]
-    norm_errs = errs / returns[0]
+    returns_arr = np.array(returns)
+    normalized = returns_arr / baseline_return
 
     fig, ax = plt.subplots(figsize=(9, 4.5))
-    colors_list = [COLORS["green"]] + [COLORS["blue"]] * (len(names) - 1)
+    colors_list = [COLORS["green"]] + [
+        COLORS["red"] if v < 0.9 else COLORS["orange"] if v < 1.0 else COLORS["blue"]
+        for v in normalized[1:]
+    ]
     bars = ax.bar(
         range(len(names)),
         normalized,
-        yerr=norm_errs,
-        capsize=3,
         color=colors_list,
-        alpha=0.8,
+        alpha=0.85,
         edgecolor="white",
         linewidth=0.5,
     )
     bars[0].set_edgecolor(COLORS["green"])
     bars[0].set_linewidth(2)
 
-    for i, (n, v) in enumerate(zip(names, normalized)):
-        ax.text(i, v + norm_errs[i] + 0.02, f"{v:.2f}", ha="center", va="bottom", fontsize=7)
+    for i, v in enumerate(normalized):
+        ax.text(i, v + 0.03, f"{returns_arr[i]:.1f}", ha="center", va="bottom", fontsize=7)
 
     ax.set_xticks(range(len(names)))
     ax.set_xticklabels(names, fontsize=8)
-    ax.set_ylabel("IQM (normalized to full model)")
+    ax.set_ylabel("Return (normalized to full model)")
     ax.set_title("Ablation Study: Component Contributions to Policy Return")
     ax.axhline(1.0, color=COLORS["green"], linestyle="--", linewidth=0.8, alpha=0.5)
     ax.grid(True, alpha=0.2, axis="y")
-    ax.set_ylim(0, 1.25)
 
     plt.tight_layout()
     out = FIGDIR / "ablation_bars.pdf"
@@ -833,13 +846,9 @@ if __name__ == "__main__":
     fig_demand_curves()
     fig_architecture()
     fig_training_curves()
-    fig_wandb_dashboard()
     fig_ablation_bars()
     fig_elasticity_bootstrap()
     fig_training_loop()
-    fig_policy_heatmap()
-    fig_reward_distribution()
-    fig_imagination_rollout()
     fig_loss_decomposition()
     print(f"\nAll figures saved to {FIGDIR}/")
     for f in sorted(FIGDIR.glob("*.pdf")):

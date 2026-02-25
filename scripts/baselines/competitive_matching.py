@@ -1,97 +1,87 @@
-"""Competitive matching baseline.
+"""Competitive matching baseline evaluated on Dominick's test data.
 
-Set price = competitor_median_price +/- 5% noise.
-Since Dominick's lacks time-varying competitor data, we use
-category average price as proxy for competitor median.
+Sets each SKU's price to the category-average price (± 2% noise) and
+computes gross margin using actual units sold in the test period.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
-try:
-    import wandb
 
-    HAS_WANDB = True
-except ImportError:
-    HAS_WANDB = False
+def load_test_data(data_dir: Path) -> pd.DataFrame:
+    """Load and filter Dominick's CSO data to test weeks."""
+    df = pd.read_csv(
+        data_dir / "category" / "wcso.csv",
+        usecols=["STORE", "UPC", "WEEK", "MOVE", "QTY", "PRICE", "PROFIT", "OK"],
+    )
+    df = df[(df["OK"] == 1) & (df["PRICE"] > 0)]
+    df["unit_price"] = df["PRICE"] / df["QTY"]
+    df["cost"] = df["PRICE"] * (1 - df["PROFIT"] / 100) / df["QTY"]
+    test = df[df["WEEK"] >= 341].copy()
+    return test
 
 
 def run_competitive_matching(
-    category_avg_prices: np.ndarray,
-    cost_vector: np.ndarray,
-    demand_fn,
-    noise_pct: float = 0.05,
-    n_episodes: int = 10,
-    H: int = 13,
+    test_df: pd.DataFrame,
+    noise_pct: float = 0.02,
     seed: int = 42,
-) -> dict[str, float]:
-    """Run competitive matching baseline.
-
-    Args:
-        category_avg_prices: (n_skus,) average category prices as competitor proxy.
-        cost_vector: (n_skus,) per-SKU cost.
-        demand_fn: Callable(prices) -> units_sold.
-        noise_pct: Price noise as fraction of category average (default 5%).
-        n_episodes: Number of evaluation episodes.
-        H: Steps per episode.
-        seed: Random seed.
-    """
+) -> dict:
+    """Match category-average price with small noise."""
     rng = np.random.default_rng(seed)
+    df = test_df.copy()
 
-    total_profit = 0.0
-    for ep in range(n_episodes):
-        ep_profit = 0.0
-        for step in range(H):
-            noise = rng.uniform(-noise_pct, noise_pct, len(category_avg_prices))
-            prices = category_avg_prices * (1 + noise)
-            prices = np.clip(prices, cost_vector * 1.01, None)  # ensure above cost
-            units_sold = demand_fn(prices)
-            profit = ((prices - cost_vector) * units_sold).sum()
-            ep_profit += profit
-        total_profit += ep_profit
+    cat_avg = df.groupby("UPC")["unit_price"].transform("mean")
+    noise = rng.uniform(-noise_pct, noise_pct, len(df))
+    df["proposed_price"] = cat_avg * (1 + noise)
+    df["proposed_price"] = np.maximum(df["proposed_price"], df["cost"] * 1.01)
+    df["gross_margin"] = (df["proposed_price"] - df["cost"]) * df["MOVE"]
 
-    avg_profit = total_profit / n_episodes
+    total_margin = df["gross_margin"].sum()
+    n_weeks = df["WEEK"].nunique()
     return {
-        "avg_episode_profit": float(avg_profit),
-        "profit_per_step": float(avg_profit / H),
+        "method": "competitive_matching",
         "noise_pct": noise_pct,
+        "total_gross_margin": float(total_margin),
+        "mean_return": float(total_margin / n_weeks),
+        "n_rows": len(df),
+        "n_weeks": int(n_weeks),
+        "eval_type": "data_replay",
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Competitive matching baseline")
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("/workspace/docs/data"),
+    )
+    parser.add_argument("--noise-pct", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--n-episodes", type=int, default=10)
-    parser.add_argument("--n-skus", type=int, default=25)
-    parser.add_argument("--use-wandb", action="store_true")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("/workspace/docs/results/baselines/competitive_matching.json"),
+    )
     args = parser.parse_args()
 
-    rng = np.random.default_rng(args.seed)
-    cost_vector = rng.uniform(0.50, 3.00, args.n_skus).astype(np.float32)
-    category_avg = cost_vector * 1.25  # assume 25% markup is category average
+    print("Loading Dominick's CSO test data (weeks 341-400)...")
+    test_df = load_test_data(args.data_dir)
+    print(f"  {len(test_df)} rows, {test_df['WEEK'].nunique()} weeks, {test_df['UPC'].nunique()} UPCs")
 
-    def demand_fn(prices: np.ndarray) -> np.ndarray:
-        base = 100.0
-        return np.clip(base * np.exp(-2.5 * np.log(np.clip(prices, 0.01, None))), 0, 10000)
+    results = run_competitive_matching(test_df, args.noise_pct, args.seed)
+    print(f"Competitive matching: mean return = {results['mean_return']:.2f}")
 
-    if args.use_wandb and HAS_WANDB:
-        wandb.init(project="dreamprice", group="baselines", name="competitive-matching")
-
-    metrics = run_competitive_matching(
-        category_avg,
-        cost_vector,
-        demand_fn,
-        n_episodes=args.n_episodes,
-        seed=args.seed,
-    )
-    print(f"Competitive matching: profit/step={metrics['profit_per_step']:.2f}")
-
-    if args.use_wandb and HAS_WANDB:
-        wandb.log(metrics)
-        wandb.finish()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Saved to {args.output}")
 
 
 if __name__ == "__main__":

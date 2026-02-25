@@ -1,107 +1,76 @@
-"""Cost-plus fixed markup baseline.
+"""Cost-plus fixed markup baseline evaluated on Dominick's test data.
 
-price = cost * (1 + target_margin)
-Sweep margins {0.15, 0.20, 0.25, 0.30}.
+Applies a fixed markup over wholesale cost to each SKU-week in the test period
+(weeks 341-400). Returns the cumulative gross margin.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+from pathlib import Path
 
 import numpy as np
-
-try:
-    import wandb
-
-    HAS_WANDB = True
-except ImportError:
-    HAS_WANDB = False
+import pandas as pd
 
 
-def run_cost_plus(
-    cost_vector: np.ndarray,
-    demand_fn,
-    target_margin: float,
-    n_episodes: int = 10,
-    H: int = 13,
-    seed: int = 42,
-) -> dict[str, float]:
-    """Run cost-plus baseline for multiple episodes.
+def load_test_data(data_dir: Path) -> pd.DataFrame:
+    """Load and filter Dominick's CSO data to test weeks."""
+    df = pd.read_csv(
+        data_dir / "category" / "wcso.csv",
+        usecols=["STORE", "UPC", "WEEK", "MOVE", "QTY", "PRICE", "PROFIT", "OK"],
+    )
+    df = df[(df["OK"] == 1) & (df["PRICE"] > 0)]
+    df["unit_price"] = df["PRICE"] / df["QTY"]
+    df["cost"] = df["PRICE"] * (1 - df["PROFIT"] / 100) / df["QTY"]
+    test = df[df["WEEK"] >= 341].copy()
+    return test
 
-    Args:
-        cost_vector: (n_skus,) per-SKU cost.
-        demand_fn: Callable(prices) -> units_sold.
-        target_margin: Markup fraction (e.g. 0.25 = 25%).
-        n_episodes: Number of episodes to evaluate.
-        H: Steps per episode.
-        seed: Random seed.
 
-    Returns:
-        Dict of metrics.
-    """
-    prices = cost_vector * (1 + target_margin)
-
-    total_profit = 0.0
-    total_revenue = 0.0
-
-    for ep in range(n_episodes):
-        ep_profit = 0.0
-        for step in range(H):
-            units_sold = demand_fn(prices)
-            profit = ((prices - cost_vector) * units_sold).sum()
-            ep_profit += profit
-            total_revenue += (prices * units_sold).sum()
-        total_profit += ep_profit
-
-    avg_profit = total_profit / n_episodes
-    avg_revenue = total_revenue / n_episodes
-
+def run_cost_plus(test_df: pd.DataFrame, markup: float) -> dict:
+    """Apply fixed markup and compute gross margin using actual units sold."""
+    df = test_df.copy()
+    df["proposed_price"] = df["cost"] * (1 + markup)
+    df["gross_margin"] = (df["proposed_price"] - df["cost"]) * df["MOVE"]
+    total_margin = df["gross_margin"].sum()
+    n_weeks = df["WEEK"].nunique()
     return {
-        "target_margin": target_margin,
-        "avg_episode_profit": float(avg_profit),
-        "avg_episode_revenue": float(avg_revenue),
-        "profit_per_step": float(avg_profit / H),
+        "method": "cost_plus",
+        "markup": markup,
+        "total_gross_margin": float(total_margin),
+        "mean_return": float(total_margin / n_weeks),
+        "n_rows": len(df),
+        "n_weeks": int(n_weeks),
+        "eval_type": "data_replay",
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Cost-plus baseline")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--n-episodes", type=int, default=10)
-    parser.add_argument("--n-skus", type=int, default=25)
-    parser.add_argument("--H", type=int, default=13)
-    parser.add_argument("--use-wandb", action="store_true")
+    parser = argparse.ArgumentParser(description="Cost-plus baseline on Dominick's data")
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("/workspace/docs/data"),
+    )
+    parser.add_argument("--markup", type=float, default=0.25)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("/workspace/docs/results/baselines/cost_plus.json"),
+    )
     args = parser.parse_args()
 
-    np.random.seed(args.seed)
+    print("Loading Dominick's CSO test data (weeks 341-400)...")
+    test_df = load_test_data(args.data_dir)
+    print(f"  {len(test_df)} rows, {test_df['WEEK'].nunique()} weeks, {test_df['UPC'].nunique()} UPCs")
 
-    # Synthetic cost and demand for standalone testing
-    cost_vector = np.random.uniform(0.50, 3.00, size=args.n_skus).astype(np.float32)
+    results = run_cost_plus(test_df, args.markup)
+    print(f"Cost-plus ({args.markup:.0%}): mean return = {results['mean_return']:.2f}")
 
-    def demand_fn(prices: np.ndarray) -> np.ndarray:
-        """Simple log-linear demand with elasticity ~ -2.5."""
-        base = 100.0
-        return np.clip(base * np.exp(-2.5 * np.log(np.clip(prices, 0.01, None))), 0, 10000)
-
-    if args.use_wandb and HAS_WANDB:
-        wandb.init(project="dreamprice", group="baselines", name="cost-plus")
-
-    margins = [0.15, 0.20, 0.25, 0.30]
-    for margin in margins:
-        metrics = run_cost_plus(
-            cost_vector,
-            demand_fn,
-            margin,
-            n_episodes=args.n_episodes,
-            H=args.H,
-            seed=args.seed,
-        )
-        print(f"Margin {margin:.0%}: profit/step={metrics['profit_per_step']:.2f}")
-        if args.use_wandb and HAS_WANDB:
-            wandb.log(metrics)
-
-    if args.use_wandb and HAS_WANDB:
-        wandb.finish()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Saved to {args.output}")
 
 
 if __name__ == "__main__":

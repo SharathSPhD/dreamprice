@@ -1,0 +1,9 @@
+{
+  "method": "cost_plus",
+  "markup": 0.25,
+  "total_gross_margin": 1718201.6170062497,
+  "mean_return": 33690.22778443627,
+  "n_rows": 483848,
+  "n_weeks": 51,
+  "eval_type": "data_replay"
+}

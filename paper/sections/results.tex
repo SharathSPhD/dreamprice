@@ -201,23 +201,3 @@ The actor's imagined return (panel c) increases from 11.3 to a stable range of a
 \label{fig:loss-decomposition}
 \end{figure}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/policy_heatmap.pdf}
-\caption{Learned pricing policy heatmap showing recommended price adjustments (relative to baseline) across stores and test weeks. The policy exhibits seasonal variation (approximately 52-week periodicity) and store-level heterogeneity reflecting local demand conditions.}
-\label{fig:policy-heatmap}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/reward_distribution.pdf}
-\caption{Reward prediction quality. (a) Distribution of actual vs.\ predicted gross margin rewards across evaluation episodes. (b) Scatter plot of actual vs.\ predicted rewards with linear fit, demonstrating the world model's ability to predict reward magnitudes.}
-\label{fig:reward-distribution}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/imagination_rollout.pdf}
-\caption{Imagination rollout trajectories for four representative SKUs over 13 steps. Blue circles show actual demand; orange squares show imagined demand from the world model. Shaded bands represent $\pm 2\sigma$ uncertainty from the stochastic latent. Error grows sub-linearly with horizon, consistent with NDR analysis.}
-\label{fig:imagination-rollout}
-\end{figure}
