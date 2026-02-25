@@ -1,7 +1,0 @@
-{
-  "method": "DreamPrice",
-  "mean_return": -43046.22080810547,
-  "std_return": 9880.512029684898,
-  "n_episodes": 100,
-  "eval_type": "world_model"
-}

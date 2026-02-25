@@ -59,4 +59,18 @@ checkpoints/
 # Data (raw data stays in docs/data, processed is generated)
 data/processed/
 data/raw/
-docs/data/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Internal project docs, conductor, and claude config (local only)
+docs/
+conductor/
+.claude/
