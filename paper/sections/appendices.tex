@@ -136,7 +136,7 @@ Table~\ref{tab:horizon-sweep} provides the detailed horizon sweep results. The i
 \midrule
 5 & 145.6 & 22.51 & Short-term exploitation \\
 10 & 86.4 & 22.43 & Intermediate transition \\
-13 (default) & \textbf{124.3} & 22.44 & Retail quarter alignment \\
+13 (default) & \textbf{193.7} & 22.44 & Retail quarter alignment \\
 25 & 135.3 & 22.48 & Long-horizon planning \\
 \bottomrule
 \end{tabular}
@@ -165,6 +165,36 @@ No symlog+twohot & 4.4 \\
 Horizon sweep ($H \in \{5, 10, 25\}$) & 2.5--4.4 \\
 GRU backbone & 2.0 \\
 Flat encoder & 2.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{RL Baseline Hyperparameters}
+\label{app:rl-baselines}
+
+Table~\ref{tab:rl-baseline-hyperparams} lists the hyperparameters used for the model-free RL baselines. All baselines are implemented via Stable-Baselines3 \citep{raffin2021sb3} and trained within the learned \dreamprice{} world model for 50{,}000 timesteps with a single seed ($s = 42$).
+
+\begin{table}[h]
+\centering
+\caption{Model-free RL baseline hyperparameters (Stable-Baselines3).}
+\label{tab:rl-baseline-hyperparams}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Parameter} & \textbf{DQN} & \textbf{PPO} & \textbf{SAC} \\
+\midrule
+Timesteps & 50{,}000 & 50{,}000 & 50{,}000 \\
+Learning rate & $1 \times 10^{-3}$ & $3 \times 10^{-4}$ & $3 \times 10^{-4}$ \\
+Batch size & 64 & 64 & 256 \\
+Buffer size & 10{,}000 & --- & 10{,}000 \\
+Exploration fraction & 0.3 & --- & --- \\
+Target update interval & 500 & --- & --- \\
+\texttt{n\_steps} & --- & 256 & --- \\
+\texttt{n\_epochs} & --- & 10 & --- \\
+Clip range & --- & 0.2 & --- \\
+$\tau$ (soft update) & --- & --- & 0.005 \\
+Entropy tuning & --- & --- & auto \\
+Action space & discrete (21 levels) & continuous & continuous \\
 \bottomrule
 \end{tabular}
 \end{table}
