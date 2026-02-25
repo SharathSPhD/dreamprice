@@ -1,6 +1,21 @@
 {
   "ablation": "horizon_5",
-  "seeds": [42, 43, 44, 45, 46],
-  "episode_rewards": [null, null, null, null, null],
-  "status": "pending"
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "episode_rewards": [
+    145.57228088378906,
+    null,
+    null,
+    null,
+    null
+  ],
+  "status": "completed",
+  "wandb_run_id": "6krspn0k",
+  "wm_total": 22.50895881652832,
+  "final_step": 100000
 }

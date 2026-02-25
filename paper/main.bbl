@@ -1,16 +1,9 @@
-\begin{thebibliography}{35}
+\begin{thebibliography}{42}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
-
-\bibitem[dom(1999)]{dominicks1999}
-Dominick's finer foods dataset.
-\newblock Technical report, James M. Kilts Center for Marketing, University of
-  Chicago Booth School of Business, 1999.
-\newblock URL
-  \url{https://www.chicagobooth.edu/research/kilts/datasets/dominicks}.
 
 \bibitem[Agarwal et~al.(2021)Agarwal, Schwarzer, Castro, Courville, and
   Bellemare]{agarwal2021deep}
@@ -21,7 +14,7 @@ Rishabh Agarwal, Max Schwarzer, Pablo~Samuel Castro, Aaron Courville, and
   (NeurIPS)}, 2021.
 
 \bibitem[Bach et~al.(2022)Bach, Chernozhukov, Kurz, and
-  Spindler]{bach2024doubleml}
+  Spindler]{bach2022doubleml}
 Philipp Bach, Victor Chernozhukov, Malte~S. Kurz, and Martin Spindler.
 \newblock {DoubleML}: An object-oriented implementation of double machine
   learning in {Python}.
@@ -32,7 +25,8 @@ Philipp Bach, Victor Chernozhukov, Malte~S. Kurz, and Martin Spindler.
 Gah-Yi Ban and N.~Bora Keskin.
 \newblock Personalized dynamic pricing with machine learning: High-dimensional
   features and heterogeneous elasticity.
-\newblock In \emph{Management Science}, volume~67, pages 5549--5568, 2021.
+\newblock \emph{Management Science}, 67\penalty0 (9):\penalty0 5549--5568,
+  2021.
 
 \bibitem[Bellemare et~al.(2017)Bellemare, Dabney, and
   Munos]{bellemare2017distributional}
@@ -44,6 +38,12 @@ Marc~G. Bellemare, Will Dabney, and R{\'e}mi Munos.
 Steven Berry, James Levinsohn, and Ariel Pakes.
 \newblock Automobile prices in market equilibrium.
 \newblock \emph{Econometrica}, 63\penalty0 (4):\penalty0 841--890, 1995.
+
+\bibitem[Byrd et~al.(2020)Byrd, Cardoso, Hybinette, and Balch]{byrd2020abides}
+David Byrd, Maria Cardoso, Maria Hybinette, and Tucker Balch.
+\newblock {ABIDES}: Towards high-fidelity multi-agent market simulation.
+\newblock In \emph{ACM International Conference on AI in Finance (ICAIF)},
+  2020.
 
 \bibitem[Chen and Simchi-Levi(2022)]{chen2022dynamic}
 Xinyun Chen and David Simchi-Levi.
@@ -65,6 +65,18 @@ Tri Dao and Albert Gu.
   through structured state space duality.
 \newblock \emph{International Conference on Machine Learning (ICML)}, 2024.
 
+\bibitem[Fildes et~al.(2022)Fildes, Ma, and Kolassa]{fildes2022retail}
+Robert Fildes, Shaohui Ma, and Stephan Kolassa.
+\newblock Retail forecasting: Research and practice.
+\newblock \emph{International Journal of Forecasting}, 38\penalty0
+  (4):\penalty0 1283--1318, 2022.
+
+\bibitem[Friedman(2001)]{friedman2001greedy}
+Jerome~H. Friedman.
+\newblock Greedy function approximation: A gradient boosting machine.
+\newblock \emph{Annals of Statistics}, 29\penalty0 (5):\penalty0 1189--1232,
+  2001.
+
 \bibitem[Gu and Dao(2024)]{gu2024mamba}
 Albert Gu and Tri Dao.
 \newblock Mamba: Linear-time sequence modeling with selective state spaces.
@@ -81,6 +93,13 @@ David Ha and J{\"u}rgen Schmidhuber.
 \newblock World models.
 \newblock In \emph{Advances in Neural Information Processing Systems
   (NeurIPS)}, 2018.
+
+\bibitem[Haarnoja et~al.(2018)Haarnoja, Zhou, Abbeel, and
+  Levine]{haarnoja2018sac}
+Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine.
+\newblock Soft actor-critic: Off-policy maximum entropy deep reinforcement
+  learning with a stochastic actor.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2018.
 
 \bibitem[Hafner et~al.(2020)Hafner, Lillicrap, Ba, and
   Norouzi]{hafner2020dreamerv1}
@@ -119,17 +138,25 @@ Stephen~J. Hoch, Byung-Do Kim, Alan~L. Montgomery, and Peter~E. Rossi.
 \newblock \emph{Journal of Marketing Research}, 32\penalty0 (1):\penalty0
   17--29, 1995.
 
-\bibitem[Holm(1979)]{holm1979simple}
-Sture Holm.
-\newblock A simple sequentially rejective multiple test procedure.
-\newblock \emph{Scandinavian Journal of Statistics}, 6\penalty0 (2):\penalty0
-  65--70, 1979.
+\bibitem[{James M. Kilts Center for Marketing}(1999)]{dominicks1999}
+{James M. Kilts Center for Marketing}.
+\newblock Dominick's finer foods dataset.
+\newblock Technical report, University of Chicago Booth School of Business,
+  1999.
+\newblock URL
+  \url{https://www.chicagobooth.edu/research/kilts/datasets/dominicks}.
 
 \bibitem[Jang et~al.(2017)Jang, Gu, and Poole]{jang2017gumbel}
 Eric Jang, Shixiang Gu, and Ben Poole.
 \newblock Categorical reparameterization with {Gumbel-Softmax}.
 \newblock \emph{International Conference on Learning Representations (ICLR)},
   2017.
+
+\bibitem[Janner et~al.(2019)Janner, Fu, Zhang, and Levine]{janner2019trust}
+Michael Janner, Justin Fu, Marvin Zhang, and Sergey Levine.
+\newblock When to trust your model: Model-based policy optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~32, 2019.
 
 \bibitem[Kidambi et~al.(2020)Kidambi, Rajeswaran, Netrapalli, and
   Joachims]{kidambi2020morel}
@@ -155,6 +182,20 @@ Sergey Levine, Aviral Kumar, George Tucker, and Justin Fu.
 \newblock Offline reinforcement learning: Tutorial, review, and perspectives on
   open problems.
 \newblock In \emph{arXiv preprint arXiv:2005.01643}, 2020.
+
+\bibitem[Micheli et~al.(2023)Micheli, Alonso, and Fleuret]{micheli2023iris}
+Vincent Micheli, Eloi Alonso, and Fran{\c{c}}ois Fleuret.
+\newblock Transformers are sample-efficient world models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2023.
+
+\bibitem[Mnih et~al.(2015)Mnih, Kavukcuoglu, Silver, Rusu, Veness, Bellemare,
+  Graves, Riedmiller, Fidjeland, Ostrovski, et~al.]{mnih2015dqn}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A. Rusu, Joel Veness,
+  Marc~G. Bellemare, Alex Graves, Martin Riedmiller, Andreas~K. Fidjeland,
+  Georg Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock \emph{Nature}, 518:\penalty0 529--533, 2015.
 
 \bibitem[Montgomery(1997)]{montgomery1997estimating}
 Alan~L. Montgomery.
@@ -193,7 +234,20 @@ Julian Schrittwieser, Ioannis Antonoglou, Thomas Hubert, Karen Simonyan,
   Thore Graepel, Timothy Lillicrap, and David Silver.
 \newblock Mastering atari, go, chess and shogi by planning with a learned
   model.
-\newblock In \emph{Nature}, volume 588, pages 604--609, 2020.
+\newblock \emph{Nature}, 588:\penalty0 604--609, 2020.
+
+\bibitem[Schulman et~al.(2017)Schulman, Wolski, Dhariwal, Radford, and
+  Klimov]{schulman2017ppo}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock In \emph{arXiv preprint arXiv:1707.06347}, 2017.
+
+\bibitem[Smets and Wouters(2007)]{smets2007shocks}
+Frank Smets and Rafael Wouters.
+\newblock Shocks and frictions in {US} business cycles: A {Bayesian DSGE}
+  approach.
+\newblock \emph{American Economic Review}, 97\penalty0 (3):\penalty0 586--606,
+  2007.
 
 \bibitem[Sutton and Barto(2018)]{sutton2018reinforcement}
 Richard~S. Sutton and Andrew~G. Barto.
@@ -215,11 +269,6 @@ Tianhe Yu, Aviral Kumar, Yevgen Chebotar, Karol Hausman, Sergey Levine, and
 \newblock {COMBO}: Conservative offline model-based policy optimization.
 \newblock In \emph{Advances in Neural Information Processing Systems
   (NeurIPS)}, 2021.
-
-\bibitem[Zhang et~al.(2023)Zhang, Tzeng, Darrell, and Efros]{zhang2023iris}
-Vincent Zhang, Eric Tzeng, Trevor Darrell, and Alexei~A. Efros.
-\newblock {IRIS}: Transformers for world models.
-\newblock In \emph{International Conference on Machine Learning (ICML)}, 2023.
 
 \bibitem[Zheng et~al.(2020)Zheng, Trott, Srinivasa, Naik, Gruesbeck, Parkes,
   and Socher]{zheng2020aieconomist}

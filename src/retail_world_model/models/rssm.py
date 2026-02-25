@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 
 from retail_world_model.models.decoder import CausalDemandDecoder
-from retail_world_model.models.encoder import ObsEncoder
-from retail_world_model.models.mamba_backbone import MambaBackbone
+from retail_world_model.models.encoder import EntityEncoder, ObsEncoder
+from retail_world_model.models.mamba_backbone import GRUFallback, MambaBackbone
 from retail_world_model.models.posterior import DecoupledPosterior
 from retail_world_model.models.reward_head import RewardEnsemble
 from retail_world_model.utils.distributions import apply_unimix, sample_straight_through
@@ -14,9 +14,9 @@ from retail_world_model.utils.distributions import apply_unimix, sample_straight
 class RSSM(nn.Module):
     """Recurrent State-Space Model with DRAMA-style decoupled posterior.
 
-    Composes: ObsEncoder -> DecoupledPosterior + MambaBackbone.
+    Composes: ObsEncoder/EntityEncoder -> DecoupledPosterior + MambaBackbone/GRU.
     Posterior: z_t = posterior(x_t)  <- DRAMA, no h_t.
-    Backbone: h_t = mamba(cat(z_t, a_t))  <- h_t is OUTPUT.
+    Backbone: h_t = backbone(cat(z_t, a_t))  <- h_t is OUTPUT.
     """
 
     def __init__(
@@ -29,6 +29,11 @@ class RSSM(nn.Module):
         elasticity_path: str | None = None,
         n_categories: int = 1,
         n_store_features: int = 12,
+        encoder_type: str = "flat",
+        backbone_type: str = "mamba",
+        n_upcs: int = 0,
+        n_stores: int = 0,
+        n_brands: int = 100,
     ):
         super().__init__()
         self.obs_dim = obs_dim
@@ -36,10 +41,21 @@ class RSSM(nn.Module):
         self.d_model = d_model
         self.n_cat = n_cat
         self.n_cls = n_cls
+        self.encoder_type = encoder_type
+        self.backbone_type = backbone_type
         latent_dim = n_cat * n_cls
 
         # Encoder: obs -> d_model
-        self.obs_encoder = ObsEncoder(obs_dim, d_model)
+        if encoder_type == "entity" and n_upcs > 0 and n_stores > 0:
+            self.obs_encoder = EntityEncoder(
+                n_upcs=n_upcs,
+                n_stores=n_stores,
+                n_continuous=obs_dim,
+                d_model=d_model,
+                n_brands=n_brands,
+            )
+        else:
+            self.obs_encoder = ObsEncoder(obs_dim, d_model)
 
         # Posterior: x_t -> (z_t, probs). NEVER receives h_t.
         self.posterior = DecoupledPosterior(d_model, d_model, n_cat, n_cls)
@@ -47,8 +63,11 @@ class RSSM(nn.Module):
         # Input projection: cat(z_t, a_t) -> d_model
         self.input_proj = nn.Linear(latent_dim + act_dim, d_model)
 
-        # Mamba-2 backbone
-        self.backbone = MambaBackbone(d_model=d_model)
+        # Backbone: Mamba-2 or forced GRU
+        if backbone_type == "gru":
+            self.backbone = GRUFallback(d_model=d_model)
+        else:
+            self.backbone = MambaBackbone(d_model=d_model)
 
         # Prior head: h_t -> logits for next z
         self.prior_head = nn.Sequential(
@@ -84,13 +103,36 @@ class RSSM(nn.Module):
             nn.Linear(d_model, obs_dim),
         )
 
-    def encode_obs(self, x_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def encode_obs(
+        self,
+        x_t: torch.Tensor,
+        entity_ids: dict[str, torch.Tensor] | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode observation into stochastic latent.
 
         Returns (z_t, probs). NEVER passes h_t to posterior.
         """
-        encoded = self.obs_encoder(x_t)
+        encoded = self._encode_raw(x_t, entity_ids)
         return self.posterior(encoded)
+
+    def _encode_raw(
+        self,
+        x_t: torch.Tensor,
+        entity_ids: dict[str, torch.Tensor] | None = None,
+    ) -> torch.Tensor:
+        """Route through ObsEncoder or EntityEncoder based on config."""
+        if self.encoder_type == "entity" and isinstance(self.obs_encoder, EntityEncoder):
+            ids = entity_ids or {}
+            default_ids = torch.zeros(
+                *x_t.shape[:-1], dtype=torch.long, device=x_t.device
+            )
+            return self.obs_encoder(
+                upc_ids=ids.get("upc_ids", default_ids),
+                store_ids=ids.get("store_ids", default_ids),
+                continuous_feats=x_t,
+                month_ids=ids.get("month_ids"),
+            )
+        return self.obs_encoder(x_t)
 
     def prior_from_h(self, h_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute prior z from backbone output h_t.
@@ -122,7 +164,10 @@ class RSSM(nn.Module):
             prior_probs: (B, n_cat, n_cls).
         """
         inp = self.input_proj(torch.cat([z_t, a_t], dim=-1))
-        h_next = self.backbone.step(inp, inference_params)
+        if self.backbone_type == "gru":
+            h_next = self.backbone.step(inp)
+        else:
+            h_next = self.backbone.step(inp, inference_params)
         z_next, prior_probs = self.prior_from_h(h_next)
         return h_next, z_next, prior_probs
 
@@ -130,12 +175,14 @@ class RSSM(nn.Module):
         self,
         x_BT: torch.Tensor,
         a_BT: torch.Tensor,
+        entity_ids: dict[str, torch.Tensor] | None = None,
     ) -> dict[str, torch.Tensor]:
         """Full sequence training pass.
 
         Args:
             x_BT: (B, T, obs_dim) observations.
             a_BT: (B, T, act_dim) actions.
+            entity_ids: Optional dict with upc_ids, store_ids, month_ids tensors.
 
         Returns:
             Dict with z_BT, h_BT, posterior_probs, prior_probs,
@@ -144,7 +191,7 @@ class RSSM(nn.Module):
         B, T, _ = x_BT.shape
 
         # Encode all observations (DRAMA: posterior depends only on x_t)
-        encoded = self.obs_encoder(x_BT)  # (B, T, d_model)
+        encoded = self._encode_raw(x_BT, entity_ids)  # (B, T, d_model)
         z_BT, posterior_probs = self.posterior(encoded)  # z: (B, T, latent_dim)
 
         # Backbone: parallel SSD scan over full sequence

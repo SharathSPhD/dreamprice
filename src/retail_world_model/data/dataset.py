@@ -78,6 +78,12 @@ class DominicksSequenceDataset(Dataset):
             for i in range(len(weeks) - seq_len + 1):
                 sequences.append((int(store), int(weeks[i])))
 
+        # Entity cardinalities for EntityEncoder
+        self._unique_upcs = sorted(df["UPC"].unique().tolist())
+        self._unique_stores = sorted(df["STORE"].unique().tolist())
+        self._upc_to_idx = {upc: i for i, upc in enumerate(self._unique_upcs)}
+        self._store_to_idx = {s: i for i, s in enumerate(self._unique_stores)}
+
         self._precomputed = self._precompute_all(sequences, store_skus, store_week_data, df)
         self._sequences = sequences
         self._df = df
@@ -106,6 +112,8 @@ class DominicksSequenceDataset(Dataset):
 
         for idx, (store, start_week) in enumerate(sequences):
             skus = store_skus[store]
+            sku_set = set(skus)
+            sku_idx = {upc: k for k, upc in enumerate(skus)}
             swd = store_week_data[store]
             weeks = sorted(swd.keys())
             si = weeks.index(start_week)
@@ -121,27 +129,26 @@ class DominicksSequenceDataset(Dataset):
                     all_x[idx, t] = self._obs[row_indices].mean(axis=0)
 
                 prices = np.zeros(K, dtype=np.float32)
-                for k, upc in enumerate(skus):
-                    sku_rows = wk_df[wk_df["UPC"] == upc]
-                    if len(sku_rows) > 0:
-                        p = float(sku_rows["unit_price_raw"].iloc[0])
+                total_reward = 0.0
+
+                mask = wk_df["UPC"].isin(sku_set)
+                sku_rows_all = wk_df[mask]
+                if len(sku_rows_all) > 0:
+                    for _, row in sku_rows_all.iterrows():
+                        k = sku_idx.get(row["UPC"])
+                        if k is None:
+                            continue
+                        p = float(row["unit_price_raw"])
                         prices[k] = p
                         all_lp[idx, t, k] = float(np.log(max(p, 1e-6)))
+                        margin = p - float(row["cost_raw"])
+                        units = max(float(row["MOVE"]), 0.0)
+                        total_reward += margin * units
 
                 if prev_prices is not None:
                     safe_prev = np.maximum(prev_prices, 1e-6)
                     all_a[idx, t] = prices / safe_prev
                 prev_prices = prices.copy()
-
-                total_reward = 0.0
-                for upc in skus:
-                    sku_rows = wk_df[wk_df["UPC"] == upc]
-                    if len(sku_rows) > 0:
-                        margin = float(
-                            sku_rows["unit_price_raw"].iloc[0] - sku_rows["cost_raw"].iloc[0]
-                        )
-                        units = float(sku_rows["MOVE"].iloc[0])
-                        total_reward += margin * max(units, 0.0)
                 all_r[idx, t] = total_reward
 
                 if t == T - 1:
@@ -151,6 +158,19 @@ class DominicksSequenceDataset(Dataset):
                 print(f"  Precomputed {idx + 1}/{N} sequences")
 
         all_sf = np.stack([store_demo_cache[s] for s, _ in sequences])
+
+        # Entity IDs for EntityEncoder
+        all_store_ids = np.array(
+            [self._store_to_idx.get(s, 0) for s, _ in sequences], dtype=np.int64
+        )
+        all_month_ids = np.zeros((N, T), dtype=np.int64)
+        for idx, (store, start_week) in enumerate(sequences):
+            swd = store_week_data[store]
+            weeks = sorted(swd.keys())
+            si = weeks.index(start_week)
+            for t, week in enumerate(weeks[si : si + T]):
+                all_month_ids[idx, t] = min(((week - 1) % 52) // 4, 11)
+
         print(f"  Precomputation complete: {N} sequences")
 
         return {
@@ -160,6 +180,8 @@ class DominicksSequenceDataset(Dataset):
             "done": torch.from_numpy(all_done),
             "lp": torch.from_numpy(all_lp),
             "sf": torch.from_numpy(all_sf),
+            "store_ids": torch.from_numpy(all_store_ids),
+            "month_ids": torch.from_numpy(all_month_ids),
         }
 
     def __len__(self) -> int:
@@ -168,6 +190,14 @@ class DominicksSequenceDataset(Dataset):
     @property
     def obs_dim(self) -> int:
         return self._obs_dim
+
+    @property
+    def n_upcs(self) -> int:
+        return len(self._unique_upcs)
+
+    @property
+    def n_stores(self) -> int:
+        return len(self._unique_stores)
 
     def _get_week_prices(
         self,
@@ -219,6 +249,8 @@ class DominicksSequenceDataset(Dataset):
             "done_BT": p["done"][idx],
             "log_price_BT": p["lp"][idx],
             "store_features": p["sf"][idx],
+            "store_id": p["store_ids"][idx],
+            "month_ids": p["month_ids"][idx],
         }
 
 

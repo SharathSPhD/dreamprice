@@ -89,7 +89,7 @@ The planned package lives at `src/retail_world_model/`. See `docs/project-bluepr
 
 **Stochastic latent**: 32 independent categorical distributions × 32 classes = 1024-dim one-hot. Entity-factored variant: 8 categoricals × 8 classes per entity. Always apply 1% unimix: `probs = 0.99 × softmax(logits) + 0.01/32`.
 
-**Causal constrained decoder**: Per-category price elasticities (`θ̂`) pre-estimated via DML-PLIV are **frozen** in `CausalDemandDecoder`. The MLP residual learns everything else. This prevents the world model from learning a confounded price-demand relationship. Expected elasticity range: −2.0 to −3.0 (grocery). See `docs/project-blueprint.md §9`.
+**Causal constrained decoder**: Per-category price elasticities (`θ̂`) pre-estimated via DML-PLIV are **frozen** in `CausalDemandDecoder`. The MLP residual learns everything else. This prevents the world model from learning a confounded price-demand relationship. Expected elasticity range: ~−0.9 for shelf-stable categories (canned soup); −2.0 to −3.0 for more elastic categories (beer, soft drinks). See `docs/project-blueprint.md §9`.
 
 **KL balancing**: `β_pred=1.0`, `β_dyn=0.5` (sg(posterior)), `β_rep=0.1` (sg(prior)), free bits=1 nat. The 5:1 asymmetry prevents posterior collapse.
 

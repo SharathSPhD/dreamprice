@@ -57,6 +57,9 @@ class DreamerTrainer:
         self.H = self.cfg.get("H", 13)
         self.lambda_lcb = self.cfg.get("lambda_lcb", 1.0)
         self.ema_decay = self.cfg.get("ema_decay", 0.98)
+        self.use_imagination = self.cfg.get("use_imagination", True)
+        self.use_symlog = self.cfg.get("use_symlog", True)
+        self.use_twohot = self.cfg.get("use_twohot", True)
 
         # Optimizers
         self.opt_wm = torch.optim.Adam(model.parameters(), lr=lr_wm)
@@ -83,7 +86,10 @@ class DreamerTrainer:
     def train_phase_a(self, batch: dict[str, torch.Tensor]) -> dict[str, float]:
         """Phase A: world model update."""
         self.opt_wm.zero_grad()
-        losses = elbo_loss(batch, self.model)
+        losses = elbo_loss(
+            batch, self.model,
+            use_symlog=self.use_symlog, use_twohot=self.use_twohot,
+        )
         losses["total"].backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_wm)
         self.opt_wm.step()
@@ -206,20 +212,26 @@ class DreamerTrainer:
         wm_metrics = self.train_phase_a(batch)
         metrics.update({f"wm/{k}": v for k, v in wm_metrics.items()})
 
-        # Get initial states from world model output
-        with torch.no_grad():
-            output = self.model.forward(batch["x_BT"], batch["a_BT"])  # type: ignore[union-attr]
-            # Use first-step states as imagination seeds
-            z0 = output["z_posterior_BT"][:, 0]
-            h0 = output["h_BT"][:, 0]
+        if self.use_imagination:
+            # Get initial states from world model output
+            with torch.no_grad():
+                entity_ids = None
+                if "store_id" in batch and "month_ids" in batch:
+                    entity_ids = {
+                        "store_ids": batch["store_id"].unsqueeze(1).expand(-1, batch["x_BT"].shape[1]),
+                        "month_ids": batch["month_ids"],
+                    }
+                output = self.model.forward(batch["x_BT"], batch["a_BT"], entity_ids=entity_ids)  # type: ignore[union-attr]
+                z0 = output["z_posterior_BT"][:, 0]
+                h0 = output["h_BT"][:, 0]
 
-        # Phase B: actor
-        actor_metrics = self.train_phase_b(z0, h0)
-        metrics.update({f"actor/{k}": v for k, v in actor_metrics.items()})
+            # Phase B: actor
+            actor_metrics = self.train_phase_b(z0, h0)
+            metrics.update({f"actor/{k}": v for k, v in actor_metrics.items()})
 
-        # Phase C: critic
-        critic_metrics = self.train_phase_c(z0, h0)
-        metrics.update({f"critic/{k}": v for k, v in critic_metrics.items()})
+            # Phase C: critic
+            critic_metrics = self.train_phase_c(z0, h0)
+            metrics.update({f"critic/{k}": v for k, v in critic_metrics.items()})
 
         self._step += 1
         self.logger.log(self._step, metrics)

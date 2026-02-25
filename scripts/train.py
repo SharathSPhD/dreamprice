@@ -45,20 +45,27 @@ def main(cfg: DictConfig) -> None:
     else:
         logger = NullLogger()
 
+    import pandas as pd
+
     # Build dataset
     data_dir = cfg.get("data_dir", "docs/data")
     category = cfg.get("category", "cso")
-    df = load_category(
-        f"{data_dir}/{category}/w{category}.csv",
-        f"{data_dir}/{category}/upc{category}.csv",
-        f"{data_dir}/demo.csv",
-    )
+    movement_path = f"{data_dir}/{category}/w{category}.csv"
 
     max_stores = cfg.get("max_stores", 0)
+    store_ids = None
     if max_stores > 0:
-        stores = sorted(df["STORE"].unique())[:max_stores]
-        df = df[df["STORE"].isin(stores)].reset_index(drop=True)
-        print(f"Limited to {max_stores} stores: {len(df):,} rows")
+        all_stores = sorted(pd.read_csv(movement_path, usecols=["STORE"])["STORE"].unique())
+        store_ids = all_stores[:max_stores]
+        print(f"Pre-filtering to {max_stores} stores: {store_ids}")
+
+    df = load_category(
+        movement_path,
+        f"{data_dir}/{category}/upc{category}.csv",
+        f"{data_dir}/demo.csv",
+        store_ids=store_ids,
+    )
+    print(f"Loaded {len(df):,} rows, {df.shape[1]} columns")
 
     max_rows = cfg.get("max_rows", 500_000)
     if len(df) > max_rows:
@@ -72,6 +79,8 @@ def main(cfg: DictConfig) -> None:
 
     # Build model
     wm_cfg = cfg.world_model
+    encoder_type = wm_cfg.get("encoder", "flat")
+    backbone_type = wm_cfg.get("backbone", "mamba")
     model = MambaWorldModel(
         obs_dim=dataset.obs_dim,
         act_dim=n_skus,
@@ -79,7 +88,12 @@ def main(cfg: DictConfig) -> None:
         n_cat=wm_cfg.n_cat,
         n_cls=wm_cfg.n_cls,
         elasticity_path=f"configs/elasticities/{category}.json",
+        encoder_type=encoder_type,
+        backbone_type=backbone_type,
+        n_upcs=dataset.n_upcs,
+        n_stores=dataset.n_stores,
     ).to(device)
+    print(f"Encoder: {encoder_type}, Backbone: {backbone_type}")
 
     # Build actor-critic
     state_dim = wm_cfg.d_model + wm_cfg.z_dim

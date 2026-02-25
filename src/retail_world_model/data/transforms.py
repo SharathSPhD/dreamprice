@@ -195,8 +195,11 @@ def build_observation_vector(
         if store_demo_cols
         else np.empty((len(df), 0))
     )
+    np.nan_to_num(demo, copy=False, nan=0.0)
 
-    return np.hstack([per_sku, temporal, demo])
+    obs = np.hstack([per_sku, temporal, demo])
+    np.nan_to_num(obs, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+    return obs
 
 
 def temporal_split(

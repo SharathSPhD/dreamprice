@@ -107,6 +107,8 @@ def elbo_loss(
     beta_dyn: float = BETA_DYN,
     beta_rep: float = BETA_REP,
     free_bits: float = FREE_BITS,
+    use_symlog: bool = True,
+    use_twohot: bool = True,
 ) -> dict[str, torch.Tensor]:
     """Full ELBO loss for world model training.
 
@@ -115,19 +117,30 @@ def elbo_loss(
     Args:
         batch: Dict with keys x_BT, a_BT, r_BT, done_BT.
         model: World model with forward() returning aligned output dict.
+        use_symlog: Apply symlog to reconstruction targets.
+        use_twohot: Use twohot CE for reward loss (vs raw MSE).
 
     Returns:
         Dict with keys: total, recon, reward, continue, kl_total, kl_dyn, kl_rep.
     """
-    output = model.forward(batch["x_BT"], batch["a_BT"])  # type: ignore[union-attr]
+    entity_ids = None
+    if "store_id" in batch and "month_ids" in batch:
+        entity_ids = {
+            "store_ids": batch["store_id"].unsqueeze(1).expand(-1, batch["x_BT"].shape[1]),
+            "month_ids": batch["month_ids"],
+        }
+    output = model.forward(batch["x_BT"], batch["a_BT"], entity_ids=entity_ids)  # type: ignore[union-attr]
 
-    # Reconstruction loss: symlog MSE
+    # Reconstruction loss
     x_recon = output["x_recon_BT"]
-    x_target = symlog(batch["x_BT"])
+    x_target = symlog(batch["x_BT"]) if use_symlog else batch["x_BT"]
     recon_loss = 0.5 * (x_recon - x_target).pow(2).sum(dim=-1).mean()
 
-    # Reward loss: twohot CE
-    reward_loss = twohot_ce_loss(output["reward_logits_BT"], batch["r_BT"])
+    # Reward loss
+    if use_twohot:
+        reward_loss = twohot_ce_loss(output["reward_logits_BT"], batch["r_BT"])
+    else:
+        reward_loss = 0.5 * (output["reward_mean"] - batch["r_BT"]).pow(2).mean()
 
     # Continue loss: BCE
     cont_loss = continue_bce_loss(output["continue_logits"], batch["done_BT"])

@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /experiment: main
-
 ablation_name: "no_symlog_twohot"
 world_model:
   use_symlog: false

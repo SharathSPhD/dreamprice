@@ -22,6 +22,11 @@ class MambaWorldModel(nn.Module):
         elasticity_path: str | None = None,
         n_categories: int = 1,
         n_store_features: int = 12,
+        encoder_type: str = "flat",
+        backbone_type: str = "mamba",
+        n_upcs: int = 0,
+        n_stores: int = 0,
+        n_brands: int = 100,
     ):
         super().__init__()
         self.rssm = RSSM(
@@ -33,6 +38,11 @@ class MambaWorldModel(nn.Module):
             elasticity_path=elasticity_path,
             n_categories=n_categories,
             n_store_features=n_store_features,
+            encoder_type=encoder_type,
+            backbone_type=backbone_type,
+            n_upcs=n_upcs,
+            n_stores=n_stores,
+            n_brands=n_brands,
         )
         self._inference_params: object | None = None
 
@@ -40,16 +50,21 @@ class MambaWorldModel(nn.Module):
         self,
         x_BT: torch.Tensor,
         a_BT: torch.Tensor,
+        entity_ids: dict[str, torch.Tensor] | None = None,
     ) -> dict[str, torch.Tensor]:
         """Training forward pass.
 
         Returns dict with latents, backbone outputs, probs, reward stats, continue logits.
         """
-        return self.rssm.train_sequence(x_BT, a_BT)
+        return self.rssm.train_sequence(x_BT, a_BT, entity_ids=entity_ids)
 
     def reset_state(self, batch_size: int = 1) -> dict[str, torch.Tensor]:
         """Initialize recurrent state for imagination rollout."""
-        self._inference_params = self.rssm.backbone.init_inference_params(batch_size)
+        if self.rssm.backbone_type == "gru":
+            self.rssm.backbone.reset_state()
+            self._inference_params = None
+        else:
+            self._inference_params = self.rssm.backbone.init_inference_params(batch_size)
         device = next(self.parameters()).device
         h = torch.zeros(batch_size, self.rssm.d_model, device=device)
         z = torch.zeros(batch_size, self.rssm.n_cat * self.rssm.n_cls, device=device)
@@ -100,8 +115,10 @@ class MambaWorldModel(nn.Module):
             Dict with h_seq, z_seq, prior_probs_seq, r_mean_seq, r_std_seq.
         """
         B, H, _ = a_sequence.shape
-        if inference_params is None:
+        if inference_params is None and self.rssm.backbone_type != "gru":
             inference_params = self.rssm.backbone.init_inference_params(B, max_seqlen=H)
+        if self.rssm.backbone_type == "gru":
+            self.rssm.backbone.reset_state()
 
         h_list = []
         z_list = []

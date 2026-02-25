@@ -25,6 +25,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - WANDB_PROJECT=dreamprice
       - PYTHONPATH=/workspace/src
+    mem_limit: 100g
+    memswap_limit: 115g
     ipc: host
     ulimits:
       memlock:

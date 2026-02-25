@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /experiment: main
-
 ablation_name: "horizon_25"
 agent:
   H: 25

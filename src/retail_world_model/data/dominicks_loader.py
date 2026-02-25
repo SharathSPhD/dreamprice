@@ -5,16 +5,36 @@ from pathlib import Path
 
 import pandas as pd
 
+STORE_DEMO_KEEP_COLS = [
+    "STORE",
+    "INCOME",
+    "EDUC",
+    "ETHNIC",
+    "HSIZEAVG",
+    "SSTRDIST",
+    "SSTRVOL",
+    "CPDIST5",
+    "CPWVOL5",
+]
 
-def load_movement(path: Path | str) -> pd.DataFrame:
-    """Load movement CSV. Drop PRICE_HEX, PROFIT_HEX. Drop OK==0 or PRICE<=0."""
+
+def load_movement(
+    path: Path | str,
+    store_ids: list[int] | None = None,
+) -> pd.DataFrame:
+    """Load movement CSV. Drop PRICE_HEX, PROFIT_HEX. Drop OK==0 or PRICE<=0.
+
+    Args:
+        path: Path to movement CSV.
+        store_ids: If provided, only load rows for these store IDs.
+    """
     df = pd.read_csv(path)
-    # Drop hex columns if present
     hex_cols = [c for c in ("PRICE_HEX", "PROFIT_HEX") if c in df.columns]
     if hex_cols:
         df = df.drop(columns=hex_cols)
-    # Filter bad rows
     df = df[(df["OK"] == 1) & (df["PRICE"] > 0)]
+    if store_ids is not None:
+        df = df[df["STORE"].isin(store_ids)]
     return df.reset_index(drop=True)
 
 
@@ -23,8 +43,15 @@ def load_upc(path: Path | str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def load_store_demo(path: Path | str) -> pd.DataFrame:
-    """Load store demographics CSV."""
+def load_store_demo(
+    path: Path | str,
+    keep_cols: list[str] | None = None,
+) -> pd.DataFrame:
+    """Load store demographics CSV, optionally keeping only needed columns."""
+    if keep_cols is not None:
+        present = pd.read_csv(path, nrows=0).columns.tolist()
+        usecols = [c for c in keep_cols if c in present]
+        return pd.read_csv(path, usecols=usecols)
     return pd.read_csv(path)
 
 
@@ -32,16 +59,22 @@ def load_category(
     movement_path: Path | str,
     upc_path: Path | str,
     demo_path: Path | str,
+    store_ids: list[int] | None = None,
 ) -> pd.DataFrame:
-    """Merge movement, UPC, and demo data. Apply cleaning. Insert zero-sales rows
-    for (store, UPC) pairs missing >10% of active weeks."""
-    movement = load_movement(movement_path)
-    upc = load_upc(upc_path)
-    demo = load_store_demo(demo_path)
+    """Merge movement, UPC, and demo data. Apply cleaning.
 
-    # Merge movement with UPC metadata
+    Args:
+        movement_path: Path to movement CSV (e.g. wcso.csv).
+        upc_path: Path to UPC metadata CSV.
+        demo_path: Path to store demographics CSV.
+        store_ids: If provided, filter to these stores early (before merge)
+            to avoid loading the full 7M-row x 510-column merged DataFrame.
+    """
+    movement = load_movement(movement_path, store_ids=store_ids)
+    upc = load_upc(upc_path)
+    demo = load_store_demo(demo_path, keep_cols=STORE_DEMO_KEEP_COLS)
+
     df = movement.merge(upc, on="UPC", how="left")
-    # Merge with store demographics
     df = df.merge(demo, on="STORE", how="left")
 
     if not os.environ.get("DREAMPRICE_SKIP_ZERO_SALES"):

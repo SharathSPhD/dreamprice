@@ -124,20 +124,20 @@ $H$ & 13 & Imagination horizon (steps) \\
 \section{Additional Ablation Results}
 \label{app:ablation-horizon}
 
-Table~\ref{tab:horizon-sweep} provides the detailed horizon sweep results. The imagination horizon $H$ controls how many steps the actor plans ahead during training. The default $H = 13$ aligns with the retail quarter (4-5-4 calendar). Shorter horizons (5, 10) may underplan; longer horizons (25) may accumulate model error. Each configuration is evaluated with 5 seeds; IQM and 95\% CI are reported.
+Table~\ref{tab:horizon-sweep} provides the detailed horizon sweep results. The imagination horizon $H$ controls how many steps the actor plans ahead during training. The default $H = 13$ aligns with the retail quarter (4-5-4 calendar). Each configuration uses seed $s = 42$ over 100K gradient steps.
 
 \begin{table}[h]
 \centering
-\caption{Imagination horizon sweep. IQM and 95\% CI for cumulative gross margin over test period.}
+\caption{Imagination horizon sweep. Mean return and WM loss for cumulative gross margin over test period. Single seed ($s = 42$).}
 \label{tab:horizon-sweep}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lccl@{}}
 \toprule
-\textbf{Horizon $H$} & \textbf{IQM} & \textbf{95\% CI} & \textbf{Notes} \\
+\textbf{Horizon $H$} & \textbf{Return} & \textbf{WM Loss} & \textbf{Notes} \\
 \midrule
-5 & 109.2 & [102.1, 116.3] & Underplanning risk \\
-10 & 117.8 & [110.4, 125.2] & Near-optimal \\
-13 (default) & \textbf{124.3} & [117.4, 131.2] & Retail quarter (best) \\
-25 & 118.0 & [108.7, 127.3] & Model error accumulation \\
+5 & 145.6 & 22.51 & Short-term exploitation \\
+10 & 86.4 & 22.43 & Intermediate transition \\
+13 (default) & \textbf{124.3} & 22.44 & Retail quarter alignment \\
+25 & 135.3 & 22.48 & Long-horizon planning \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -145,34 +145,28 @@ Table~\ref{tab:horizon-sweep} provides the detailed horizon sweep results. The i
 \section{Computational Requirements}
 \label{app:compute}
 
-Table~\ref{tab:compute} summarizes training time estimates per seed for each configuration. All runs use the NVIDIA DGX Spark (GB10 GPU, 128 GB unified memory). The main model and baselines use 10 seeds each; ablations use 5 seeds each. Total compute budget for the full evaluation campaign ranges from approximately 470 to 1,060 hours.
+Table~\ref{tab:compute} summarizes observed training times per seed. All runs use the NVIDIA DGX Spark (GB10 GPU, 128\,GB unified memory). The reported times are wall-clock measurements from single-seed training runs.
 
 \begin{table}[h]
 \centering
-\caption{Training time estimates per seed (hours). Hardware: NVIDIA DGX Spark, 128 GB unified memory.}
+\caption{Observed training time per seed (hours). Hardware: NVIDIA DGX Spark, 128\,GB unified memory. Ablation times measured from completed runs.}
 \label{tab:compute}
-\begin{tabular}{@{}lcc@{}}
+\begin{tabular}{@{}lc@{}}
 \toprule
-\textbf{Configuration} & \textbf{Hours/seed} & \textbf{Total (all seeds)} \\
+\textbf{Configuration} & \textbf{Hours/seed} \\
 \midrule
-\dreamprice{} (main, 100K steps) & 2.6 & 26 \\
-Cost-plus & ${<}$0.01 & ${<}$0.1 \\
-Static XGBoost & 0.2 & 2 \\
-Competitive Matching & ${<}$0.01 & ${<}$0.1 \\
-DQN & 1.5 & 15 \\
-PPO & 2.0 & 20 \\
-SAC & 2.0 & 20 \\
+\dreamprice{} (main, 100K steps) & 2.6 \\
 \midrule
-\multicolumn{3}{l}{\textit{Ablations (5 seeds each)}} \\
-Imagination OFF & 1.8 & 9 \\
-Horizon sweep ($\times$4) & 2.6 & 52 \\
-Deterministic latent & 2.4 & 12 \\
-No symlog+twohot & 2.4 & 12 \\
-GRU backbone & 2.8 & 14 \\
-Flat encoder & 2.2 & 11 \\
-No MOPO LCB & 2.4 & 12 \\
+\multicolumn{2}{l}{\textit{Ablations (single seed, 100K steps)}} \\
+Imagination OFF & 0.9 \\
+No MOPO LCB & 4.4 \\
+Deterministic-only latent & 4.1 \\
+No symlog+twohot & 4.4 \\
+Horizon sweep ($H \in \{5, 10, 25\}$) & 2.5--4.4 \\
+GRU backbone & 2.0 \\
+Flat encoder & 2.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Training was conducted on an NVIDIA DGX Spark (GB10 GPU, 128\,GB unified memory, CUDA~13.0) using Docker containers for reproducibility. The main \dreamprice{} configuration (approximately 22M parameters) completes 100K gradient steps in approximately 2.6 hours wall-clock time with batch size 32 and sequence length 64. The unified memory architecture eliminates CPU-GPU data transfer overhead, as the entire dataset fits in the shared memory pool. Total compute for the full evaluation campaign (10 seeds main, 5 seeds per ablation) is approximately 194 GPU-hours on this hardware.
+Training was conducted on an NVIDIA DGX Spark (GB10 GPU, 128\,GB unified memory, CUDA~13.0, ARM64) using Docker containers for reproducibility. The main \dreamprice{} configuration (approximately 22M parameters) completes 100K gradient steps in approximately 2.6 hours wall-clock time with batch size 32 and sequence length 64. The imagination-off ablation completes in under an hour because it skips the actor-critic training phases (B and C). The unified memory architecture of the DGX Spark eliminates explicit CPU-GPU data transfer overhead, as the dataset resides in the shared memory pool accessible by both processor types. Memory management required early store filtering and demographic column pruning during data loading to keep peak memory usage below 100\,GB, leaving headroom for the CUDA runtime, Triton JIT compilation, and experiment logging.

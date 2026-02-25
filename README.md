@@ -170,6 +170,10 @@ dreamprice/
 └── docs/                       # Data, results, documentation
 ```
 
+## Future Work
+
+- Inference-time price optimization via CEM or gradient-based planning (`inference/planning.py`)
+
 ## License
 
 CC-BY-NC-4.0. Data from Kilts Center for Marketing, University of Chicago.

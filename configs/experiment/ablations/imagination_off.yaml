@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /experiment: main
-
 ablation_name: "imagination_off"
 agent:
   use_imagination: false  # model-free AC from data only

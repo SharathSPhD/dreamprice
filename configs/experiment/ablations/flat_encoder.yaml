@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /experiment: main
-
 ablation_name: "flat_encoder"
 world_model:
   encoder: "flat"  # flat concat instead of entity embeddings

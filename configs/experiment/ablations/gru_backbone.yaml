@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /experiment: main
-
 ablation_name: "gru_backbone"
 world_model:
   backbone: "gru"  # GRU instead of Mamba-2
