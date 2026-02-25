@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.2.24)  25 FEB 2026 17:04
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.2.24)  25 FEB 2026 17:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1177,52 +1177,50 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 <figures/training_curves.pdf, id=678, 780.34474pt x 563.27254pt>
 File: figures/training_curves.pdf Graphic file (type pdf)
 <use figures/training_curves.pdf>
-Package pdftex.def Info: figures/training_curves.pdf  used on input line 101.
+Package pdftex.def Info: figures/training_curves.pdf  used on input line 104.
 (pdftex.def)             Requested size: 430.31812pt x 310.62596pt.
  [17 <./figures/training_curves.pdf>]
 [18]
 <figures/ablation_bars.pdf, id=748, 635.74011pt x 310.92287pt>
 File: figures/ablation_bars.pdf Graphic file (type pdf)
 <use figures/ablation_bars.pdf>
-Package pdftex.def Info: figures/ablation_bars.pdf  used on input line 154.
+Package pdftex.def Info: figures/ablation_bars.pdf  used on input line 155.
 (pdftex.def)             Requested size: 385.02547pt x 188.31053pt.
  [19 <./figures/ablation_bars.pdf>] [20]
-<figures/ols_vs_iv.pdf, id=834, 339.29575pt x 303.45432pt>
+<figures/ols_vs_iv.pdf, id=832, 339.29575pt x 303.45432pt>
 File: figures/ols_vs_iv.pdf Graphic file (type pdf)
 <use figures/ols_vs_iv.pdf>
-Package pdftex.def Info: figures/ols_vs_iv.pdf  used on input line 185.
+Package pdftex.def Info: figures/ols_vs_iv.pdf  used on input line 186.
 (pdftex.def)             Requested size: 249.13371pt x 222.82092pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/elasticity_bootstrap.pdf, id=835, 418.9207pt x 274.41333pt>
+<figures/elasticity_bootstrap.pdf, id=833, 418.9207pt x 274.41333pt>
 File: figures/elasticity_bootstrap.pdf Graphic file (type pdf)
 <use figures/elasticity_bootstrap.pdf>
 Package pdftex.def Info: figures/elasticity_bootstrap.pdf  used on input line 1
-92.
+93.
 (pdftex.def)             Requested size: 294.42636pt x 192.86682pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/loss_decomposition.pdf, id=836, 563.46074pt x 274.20004pt>
+<figures/loss_decomposition.pdf, id=834, 563.46074pt x 274.20004pt>
 File: figures/loss_decomposition.pdf Graphic file (type pdf)
 <use figures/loss_decomposition.pdf>
-Package pdftex.def Info: figures/loss_decomposition.pdf  used on input line 199
+Package pdftex.def Info: figures/loss_decomposition.pdf  used on input line 200
 .
 (pdftex.def)             Requested size: 430.31812pt x 209.41507pt.
-) (./sections/conclusion.tex [21] [22 <./figures/ols_vs_iv.pdf>]
+) (./sections/conclusion.tex [21] [22 <./figures/ols_vs_iv.pdf>] [23 <./figures
+/elasticity_bootstrap.pdf>]
 Overfull \hbox (5.29593pt too wide) in paragraph at lines 23--24
 []\T1/lmr/bx/n/10.95 (-20) Dataset\T1/lmr/m/n/10.95 (-20) : [][]$\T1/lmtt/m/n/1
 0.95 https : / / huggingface . co / datasets / qbz506 / dreamprice -[] dominick
 s -[] cso$[][] \T1/lmr/m/n/10.95 (-20) --- pre-
  []
 
-[23 <./figures/elasticity_bootstrap.pdf>]) (./main.bbl [24 <./figures/loss_deco
-mposition.pdf>] [25] [26]) (./sections/appendices.tex
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
+) (./main.bbl [24 <./figures/loss_decomposition.pdf>] [25] [26])
+(./sections/appendices.tex
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -1236,7 +1234,10 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-) [28] [29] [30] (./main.aux)
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+) [28] [29] [30] [31] (./main.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -1249,9 +1250,9 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 604EF9AE1A755778CF8BE5BA808D0D11;5450.
  ) 
 Here is how much of TeX's memory you used:
- 39179 strings out of 476106
- 885096 string characters out of 5793933
- 1947975 words of memory out of 5000000
+ 39180 strings out of 476106
+ 885103 string characters out of 5793933
+ 1946975 words of memory out of 5000000
  60069 multiletter control sequences out of 15000+600000
  670593 words of font info for 263 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
@@ -1273,10 +1274,10 @@ ts/type1/public/lm/lmsy7.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy8.pfb>
 </usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type
 1/public/lm/lmtt8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
 s/symbols/msbm10.pfb>
-Output written on main.pdf (30 pages, 789817 bytes).
+Output written on main.pdf (31 pages, 791738 bytes).
 PDF statistics:
- 1221 PDF objects out of 1440 (max. 8388607)
- 779 compressed objects within 8 object streams
- 170 named destinations out of 1000 (max. 500000)
+ 1226 PDF objects out of 1440 (max. 8388607)
+ 783 compressed objects within 8 object streams
+ 171 named destinations out of 1000 (max. 500000)
  61728 words of extra memory for PDF output out of 61914 (max. 10000000)
 

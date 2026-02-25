@@ -152,14 +152,14 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Causal demand response curves. (a) Predicted demand using DML-PLIV elasticity ($\theta = -0.940$, solid) compared to OLS-derived demand ($\theta = -0.931$, dashed). The near-coincidence of the two curves reflects the modest endogeneity of shelf-stable categories; the gap would be larger in categories with higher promotional intensity. (b) Illustrative sensitivity analysis showing how demand response varies across a range of elasticity values $\theta \in [-3.0, -0.5]$.}}{16}{figure.caption.6}\protected@file@percent }
 \newlabel{fig:demand-curves}{{3}{16}{Causal demand response curves. (a) Predicted demand using DML-PLIV elasticity ($\theta = -0.940$, solid) compared to OLS-derived demand ($\theta = -0.931$, dashed). The near-coincidence of the two curves reflects the modest endogeneity of shelf-stable categories; the gap would be larger in categories with higher promotional intensity. (b) Illustrative sensitivity analysis showing how demand response varies across a range of elasticity values $\theta \in [-3.0, -0.5]$}{figure.caption.6}{}}
 \newlabel{fig:demand-curves@cref}{{[figure][3][]3}{[1][15][]16}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Offline policy performance comparison. Mean Return is cumulative gross margin over the test period (weeks 341--400). Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the actual Dominick's test data; RL baselines are evaluated within the trained world model.\vspace  {2pt}}}{16}{table.caption.7}\protected@file@percent }
-\newlabel{tab:baseline-comparison}{{4}{16}{Offline policy performance comparison. Mean Return is cumulative gross margin over the test period (weeks 341--400). Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the actual Dominick's test data; RL baselines are evaluated within the trained world model.\vspace {2pt}}{table.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Offline policy performance comparison. Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the Dominick's test data (weeks 341--400); the ``Mean Gross Margin'' column reports weekly average gross margin in dollars. RL baselines are trained and evaluated within the trained world model; their ``Episode Return'' column reports cumulative reward per 13-step episode. \textsc  {DreamPrice}{} is evaluated via imagination rollout with MOPO-LCB pessimistic rewards.\vspace  {2pt}}}{16}{table.caption.7}\protected@file@percent }
+\newlabel{tab:baseline-comparison}{{4}{16}{Offline policy performance comparison. Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the Dominick's test data (weeks 341--400); the ``Mean Gross Margin'' column reports weekly average gross margin in dollars. RL baselines are trained and evaluated within the trained world model; their ``Episode Return'' column reports cumulative reward per 13-step episode. \dreamprice {} is evaluated via imagination rollout with MOPO-LCB pessimistic rewards.\vspace {2pt}}{table.caption.7}{}}
 \newlabel{tab:baseline-comparison@cref}{{[table][4][]4}{[1][16][]16}}
-\citation{janner2019trust}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Training progress. (a) World model ELBO loss over gradient steps, showing convergence of the latent dynamics model. (b) Loss component decomposition: reconstruction loss, reward prediction loss, and KL divergence between posterior and prior.}}{17}{figure.caption.8}\protected@file@percent }
 \newlabel{fig:training-curves}{{4}{17}{Training progress. (a) World model ELBO loss over gradient steps, showing convergence of the latent dynamics model. (b) Loss component decomposition: reconstruction loss, reward prediction loss, and KL divergence between posterior and prior}{figure.caption.8}{}}
 \newlabel{fig:training-curves@cref}{{[figure][4][]4}{[1][17][]17}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Ablation Study}{17}{subsection.4.5}\protected@file@percent }
+\citation{janner2019trust}
 \citation{yu2020mopo,levine2020offline}
 \@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Ablation study. Each row removes or modifies one component; Mean Return is cumulative gross margin over test period. $\Delta $\% is relative change from full \textsc  {DreamPrice}{}.}}{18}{table.caption.9}\protected@file@percent }
 \newlabel{tab:ablations}{{5}{18}{Ablation study. Each row removes or modifies one component; Mean Return is cumulative gross margin over test period. $\Delta $\% is relative change from full \dreamprice {}}{table.caption.9}{}}
@@ -171,42 +171,42 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Discussion}{19}{subsection.4.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Endogeneity correction.}{19}{section*.11}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Mamba-2 vs. GRU.}{19}{section*.12}\protected@file@percent }
-\citation{ramsey1927contribution}
 \@writefile{toc}{\contentsline {paragraph}{Imagination horizon sensitivity.}{20}{section*.13}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Baseline comparison analysis.}{20}{section*.14}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Training dynamics.}{20}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Economic interpretation.}{20}{section*.16}\protected@file@percent }
+\citation{ramsey1927contribution}
 \citation{fildes2022retail}
+\@writefile{toc}{\contentsline {paragraph}{Economic interpretation.}{21}{section*.16}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{World model quality and prediction horizon.}{21}{section*.17}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Computational efficiency.}{21}{section*.18}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Limitations.}{21}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion and Future Work}{21}{section.5}\protected@file@percent }
-\newlabel{sec:conclusion}{{5}{21}{Conclusion and Future Work}{section.5}{}}
-\newlabel{sec:conclusion@cref}{{[section][5][]5}{[1][21][]21}}
 \citation{rajbhandari2024drama}
 \citation{chernozhukov2018dml}
-\citation{levine2020offline,yu2020mopo}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces OLS vs.\ IV elasticity comparison. Each point represents one store's estimated price elasticity. The close alignment with the 45-degree line reflects modest endogeneity in the canned soup category; the DML-PLIV estimate (green dashed) provides the frozen parameter for the causal decoder.}}{22}{figure.caption.20}\protected@file@percent }
 \newlabel{fig:ols-vs-iv}{{6}{22}{OLS vs.\ IV elasticity comparison. Each point represents one store's estimated price elasticity. The close alignment with the 45-degree line reflects modest endogeneity in the canned soup category; the DML-PLIV estimate (green dashed) provides the frozen parameter for the causal decoder}{figure.caption.20}{}}
 \newlabel{fig:ols-vs-iv@cref}{{[figure][6][]6}{[1][21][]22}}
-\@writefile{toc}{\contentsline {paragraph}{Limitations.}{22}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion and Future Work}{22}{section.5}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{22}{Conclusion and Future Work}{section.5}{}}
+\newlabel{sec:conclusion@cref}{{[section][5][]5}{[1][21][]22}}
+\citation{levine2020offline,yu2020mopo}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Bootstrap distributions of OLS and IV mean elasticity estimates (500 bootstrap samples). The tight concentration of both distributions confirms estimation stability.}}{23}{figure.caption.21}\protected@file@percent }
 \newlabel{fig:elasticity-bootstrap}{{7}{23}{Bootstrap distributions of OLS and IV mean elasticity estimates (500 bootstrap samples). The tight concentration of both distributions confirms estimation stability}{figure.caption.21}{}}
 \newlabel{fig:elasticity-bootstrap@cref}{{[figure][7][]7}{[1][21][]23}}
+\@writefile{toc}{\contentsline {paragraph}{Limitations.}{23}{section*.23}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Future work.}{23}{section*.24}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Reproducibility and open-source release.}{23}{section*.25}\protected@file@percent }
 \bibstyle{plainnat}
 \bibdata{references}
 \bibcite{agarwal2021deep}{{1}{2021}{{Agarwal et~al.}}{{Agarwal, Schwarzer, Castro, Courville, and Bellemare}}}
 \bibcite{bach2022doubleml}{{2}{2022}{{Bach et~al.}}{{Bach, Chernozhukov, Kurz, and Spindler}}}
 \bibcite{ban2021personalized}{{3}{2021}{{Ban and Keskin}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Stacked area chart of world model loss decomposition over training. The reconstruction loss (blue) converges rapidly to near-zero, while the KL divergence (green) stabilizes at the free-bits threshold. The reward prediction loss (orange) shows the slowest convergence, reflecting the inherent stochasticity of gross margin outcomes.}}{24}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:loss-decomposition}{{8}{24}{Stacked area chart of world model loss decomposition over training. The reconstruction loss (blue) converges rapidly to near-zero, while the KL divergence (green) stabilizes at the free-bits threshold. The reward prediction loss (orange) shows the slowest convergence, reflecting the inherent stochasticity of gross margin outcomes}{figure.caption.22}{}}
+\newlabel{fig:loss-decomposition@cref}{{[figure][8][]8}{[1][21][]24}}
+\@writefile{toc}{\contentsline {paragraph}{Reproducibility and open-source release.}{24}{section*.25}\protected@file@percent }
 \bibcite{bellemare2017distributional}{{4}{2017}{{Bellemare et~al.}}{{Bellemare, Dabney, and Munos}}}
 \bibcite{berry1995automobile}{{5}{1995}{{Berry et~al.}}{{Berry, Levinsohn, and Pakes}}}
 \bibcite{byrd2020abides}{{6}{2020}{{Byrd et~al.}}{{Byrd, Cardoso, Hybinette, and Balch}}}
 \bibcite{chen2022dynamic}{{7}{2022}{{Chen and Simchi-Levi}}{{}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Stacked area chart of world model loss decomposition over training. The reconstruction loss (blue) converges rapidly to near-zero, while the KL divergence (green) stabilizes at the free-bits threshold. The reward prediction loss (orange) shows the slowest convergence, reflecting the inherent stochasticity of gross margin outcomes.}}{24}{figure.caption.22}\protected@file@percent }
-\newlabel{fig:loss-decomposition}{{8}{24}{Stacked area chart of world model loss decomposition over training. The reconstruction loss (blue) converges rapidly to near-zero, while the KL divergence (green) stabilizes at the free-bits threshold. The reward prediction loss (orange) shows the slowest convergence, reflecting the inherent stochasticity of gross margin outcomes}{figure.caption.22}{}}
-\newlabel{fig:loss-decomposition@cref}{{[figure][8][]8}{[1][21][]24}}
 \bibcite{chernozhukov2018dml}{{8}{2018}{{Chernozhukov et~al.}}{{Chernozhukov, Chetverikov, Demirer, Duflo, Hansen, Newey, and Robins}}}
 \bibcite{dao2024mamba2}{{9}{2024}{{Dao and Gu}}{{}}}
 \bibcite{fildes2022retail}{{10}{2022}{{Fildes et~al.}}{{Fildes, Ma, and Kolassa}}}
@@ -249,25 +249,25 @@
 \@writefile{toc}{\contentsline {section}{\numberline {B}Hyperparameter Configuration}{27}{appendix.B}\protected@file@percent }
 \newlabel{app:hyperparams}{{B}{27}{Hyperparameter Configuration}{appendix.B}{}}
 \newlabel{app:hyperparams@cref}{{[appendix][2][2147483647]B}{[1][27][]27}}
-\@writefile{toc}{\contentsline {section}{\numberline {C}Additional Ablation Results}{27}{appendix.C}\protected@file@percent }
-\newlabel{app:ablation-horizon}{{C}{27}{Additional Ablation Results}{appendix.C}{}}
-\newlabel{app:ablation-horizon@cref}{{[appendix][3][2147483647]C}{[1][27][]27}}
 \@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Dominick's product category codes and descriptions.}}{28}{table.caption.27}\protected@file@percent }
 \newlabel{tab:category-codes}{{6}{28}{Dominick's product category codes and descriptions}{table.caption.27}{}}
 \newlabel{tab:category-codes@cref}{{[table][6][2147483647]6}{[1][27][]28}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Additional Ablation Results}{28}{appendix.C}\protected@file@percent }
+\newlabel{app:ablation-horizon}{{C}{28}{Additional Ablation Results}{appendix.C}{}}
+\newlabel{app:ablation-horizon@cref}{{[appendix][3][2147483647]C}{[1][27][]28}}
 \@writefile{toc}{\contentsline {section}{\numberline {D}Computational Requirements}{28}{appendix.D}\protected@file@percent }
 \newlabel{app:compute}{{D}{28}{Computational Requirements}{appendix.D}{}}
-\newlabel{app:compute@cref}{{[appendix][4][2147483647]D}{[1][27][]28}}
+\newlabel{app:compute@cref}{{[appendix][4][2147483647]D}{[1][28][]28}}
 \@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Data statistics for canned soup category (preprocessed).}}{29}{table.caption.28}\protected@file@percent }
 \newlabel{tab:data-statistics}{{7}{29}{Data statistics for canned soup category (preprocessed)}{table.caption.28}{}}
 \newlabel{tab:data-statistics@cref}{{[table][7][2147483647]7}{[1][27][]29}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Full hyperparameter configuration.}}{29}{table.caption.29}\protected@file@percent }
-\newlabel{tab:hyperparams-full}{{8}{29}{Full hyperparameter configuration}{table.caption.29}{}}
-\newlabel{tab:hyperparams-full@cref}{{[table][8][2147483647]8}{[1][27][]29}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Full hyperparameter configuration.}}{30}{table.caption.29}\protected@file@percent }
+\newlabel{tab:hyperparams-full}{{8}{30}{Full hyperparameter configuration}{table.caption.29}{}}
+\newlabel{tab:hyperparams-full@cref}{{[table][8][2147483647]8}{[1][27][]30}}
 \@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Imagination horizon sweep. Mean return and WM loss for cumulative gross margin over test period. Single seed ($s = 42$).}}{30}{table.caption.30}\protected@file@percent }
 \newlabel{tab:horizon-sweep}{{9}{30}{Imagination horizon sweep. Mean return and WM loss for cumulative gross margin over test period. Single seed ($s = 42$)}{table.caption.30}{}}
-\newlabel{tab:horizon-sweep@cref}{{[table][9][2147483647]9}{[1][27][]30}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Observed training time per seed (hours). Hardware: NVIDIA DGX Spark, 128\,GB unified memory. Ablation times measured from completed runs.}}{30}{table.caption.31}\protected@file@percent }
-\newlabel{tab:compute}{{10}{30}{Observed training time per seed (hours). Hardware: NVIDIA DGX Spark, 128\,GB unified memory. Ablation times measured from completed runs}{table.caption.31}{}}
-\newlabel{tab:compute@cref}{{[table][10][2147483647]10}{[1][28][]30}}
-\gdef \@abspage@last{30}
+\newlabel{tab:horizon-sweep@cref}{{[table][9][2147483647]9}{[1][28][]30}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Observed training time per seed (hours). Hardware: NVIDIA DGX Spark, 128\,GB unified memory. Ablation times measured from completed runs.}}{31}{table.caption.31}\protected@file@percent }
+\newlabel{tab:compute}{{10}{31}{Observed training time per seed (hours). Hardware: NVIDIA DGX Spark, 128\,GB unified memory. Ablation times measured from completed runs}{table.caption.31}{}}
+\newlabel{tab:compute@cref}{{[table][10][2147483647]10}{[1][28][]31}}
+\gdef \@abspage@last{31}

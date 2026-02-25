@@ -1,0 +1,11 @@
+{
+  "mean_return": 4291.315105247498,
+  "std_return": 0.08303969999733023,
+  "median_return": 4291.321104049683,
+  "min_return": 4290.514612197876,
+  "max_return": 4291.527807235718,
+  "n_episodes": 100,
+  "method": "DQN",
+  "total_timesteps": 50000,
+  "eval_type": "world_model"
+}

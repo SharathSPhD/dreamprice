@@ -71,30 +71,33 @@ The baselines are grouped into three families. The first family comprises rule-b
 
 The second family comprises model-free RL methods trained and evaluated within the learned \dreamprice{} world model to ensure a fair comparison of policy-learning capability: \textbf{DQN} \citep{mnih2015dqn} uses a deep Q-network with a discretized 21-level price grid and epsilon-greedy exploration; \textbf{PPO} \citep{schulman2017ppo} is an on-policy method using a clipped surrogate objective; and \textbf{SAC} \citep{haarnoja2018sac} is off-policy with continuous actions and entropy regularization.
 
-Table~\ref{tab:baseline-comparison} reports performance for each method. Mean Return denotes the cumulative gross margin over the test period.
+Table~\ref{tab:baseline-comparison} reports performance for each method. Because rule-based baselines are evaluated on the actual test data while RL methods are evaluated within the learned world model, the reward scales differ; we report both families with their natural metrics and discuss qualitative comparisons below.
 
 \begin{table}[t]
 \centering
-\caption{Offline policy performance comparison. Mean Return is cumulative gross margin over the test period (weeks 341--400). Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the actual Dominick's test data; RL baselines are evaluated within the trained world model.\vspace{2pt}}
+\caption{Offline policy performance comparison. Single seed ($s=42$). Rule-based baselines are evaluated via data replay on the Dominick's test data (weeks 341--400); the ``Mean Gross Margin'' column reports weekly average gross margin in dollars. RL baselines are trained and evaluated within the trained world model; their ``Episode Return'' column reports cumulative reward per 13-step episode. \dreamprice{} is evaluated via imagination rollout with MOPO-LCB pessimistic rewards.\vspace{2pt}}
 \label{tab:baseline-comparison}
-\begin{tabular}{@{}llc@{}}
+\small
+\begin{tabular}{@{}llrr@{}}
 \toprule
-\textbf{Method} & \textbf{Eval.\ Type} & \textbf{Mean Return} \\
+\textbf{Method} & \textbf{Eval.\ Type} & \textbf{Mean Gross Margin (\$/wk)} & \textbf{Episode Return} \\
 \midrule
-Cost-plus (25\%) & data replay & 54.8 \\
-Competitive matching & data replay & 42.1 \\
-Static XGBoost & data replay & 87.2 \\
+Cost-plus (25\%) & data replay & 33{,}690 & --- \\
+Competitive matching & data replay & 45{,}020 & --- \\
+Static XGBoost & data replay & 148{,}623 & --- \\
 \midrule
-DQN & world model & 68.9 \\
-PPO & world model & 76.4 \\
-SAC & world model & 82.3 \\
+DQN & world model & --- & 4{,}291 \\
+PPO & world model & --- & $-$13{,}827 \\
+SAC & world model & --- & $-$620 \\
 \midrule
-\dreamprice{} & world model & \textbf{124.3} \\
+\dreamprice{} & imagination & --- & \textbf{194} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The performance hierarchy reveals three tiers. At the bottom, competitive matching (42.1) and cost-plus at 25\% markup (54.8) represent zero-intelligence baselines whose returns reflect the average margin of pricing rules applied uniformly across all SKUs and weeks. The middle tier comprises model-free RL methods: DQN (68.9), PPO (76.4), and SAC (82.3). These methods learn policies from interaction with the world model but cannot perform counterfactual planning---they optimise within the observed price-demand distribution without imagining alternative futures. SAC achieves the highest return among model-free methods due to its off-policy nature and continuous action space. Static XGBoost (87.2) serves as a strong non-RL baseline, leveraging supervised demand forecasting with per-SKU price optimization; its competitive performance reflects the value of accurate demand prediction even without sequential planning.
+Among the data-replay baselines, Static XGBoost dominates by a wide margin (\$148{,}623 per week), reflecting the value of supervised demand forecasting combined with per-SKU price optimization. Cost-plus and competitive matching achieve much lower margins (\$33{,}690 and \$45{,}020 respectively), as expected for zero-intelligence strategies that apply uniform markups without learning.
+
+Among the model-free RL methods trained within the world model, DQN achieves the highest episode return (4{,}291), benefiting from its discrete 21-level price grid that aligns naturally with the environment's action space. SAC ($-$620) and PPO ($-$13{,}827) perform substantially worse, suggesting that the continuous action wrappers and on-policy sample efficiency are limiting factors in this domain. The \dreamprice{} agent, evaluated via 13-step imagination rollouts with MOPO-LCB pessimistic rewards, achieves a return of 194 in the symlog-transformed reward space. This evaluation uses the same reward ensemble that penalises epistemic uncertainty, yielding inherently lower and more conservative returns than the raw gross-margin reward of the GroceryPricingEnv wrapper used by SB3 baselines. As such, the absolute values of DreamPrice and the SB3 baselines are not directly comparable; the key advantage of DreamPrice's approach is the ability to plan via latent imagination while maintaining pessimistic safety guarantees through the MOPO-LCB penalty.
 
 \begin{figure}[h]
 \centering
@@ -115,17 +118,17 @@ Nine ablations isolate the contribution of each design choice. Table~\ref{tab:ab
 \toprule
 \textbf{Ablation} & \textbf{What it tests} & \textbf{Return} & \textbf{WM Loss} & \textbf{$\Delta$\%} \\
 \midrule
-Full \dreamprice{} & Baseline & 124.3 & 22.44 & --- \\
+Full \dreamprice{} & Baseline & 193.7 & 22.44 & --- \\
 \midrule
 Imagination OFF & World model planning value & ---$^\dagger$ & 22.47 & --- \\
-Horizon $H{=}5$ & Underplanning & 145.6 & 22.51 & $+$17.1 \\
-Horizon $H{=}10$ & Shorter planning depth & 86.4 & 22.43 & $-$30.5 \\
-Horizon $H{=}25$ & Error accumulation & 135.3 & 22.48 & $+$8.8 \\
-Deterministic-only latent & Uncertainty modeling value & 289.6 & 5.32 & $+$133.0 \\
-No symlog+twohot & Reward scale robustness & 63.2 & 573.2 & $-$49.1 \\
-GRU backbone & Long-range memory benefit & 137.7 & 19.89 & $+$10.8 \\
-Flat encoder & Structural representation value & 68.6 & 22.52 & $-$44.8 \\
-No MOPO LCB & Offline safety value & 27.9 & 22.43 & $-$77.5 \\
+Horizon $H{=}5$ & Underplanning & 145.6 & 22.51 & $-$24.8 \\
+Horizon $H{=}10$ & Shorter planning depth & 86.4 & 22.43 & $-$55.4 \\
+Horizon $H{=}25$ & Error accumulation & 135.3 & 22.48 & $-$30.2 \\
+Deterministic-only latent & Uncertainty modeling value & 289.6 & 5.32 & $+$49.5 \\
+No symlog+twohot & Reward scale robustness & 63.2 & 573.2 & $-$67.4 \\
+GRU backbone & Long-range memory benefit & 137.7 & 19.89 & $-$28.9 \\
+Flat encoder & Structural representation value & 68.6 & 22.52 & $-$64.6 \\
+No MOPO LCB & Offline safety value & 27.9 & 22.43 & $-$85.6 \\
 \bottomrule
 \end{tabular}
 \begin{flushleft}
@@ -135,19 +138,17 @@ No MOPO LCB & Offline safety value & 27.9 & 22.43 & $-$77.5 \\
 
 The Imagination OFF ablation disables the imagination-based actor training loop entirely, leaving only the world model training phase active. Without imagination, no policy is learned; the world model loss (22.47) is comparable to the full model (22.44), confirming that disabling imagination does not affect world model quality. The absence of a policy return underscores the necessity of imagination-based planning for generating actionable pricing strategies.
 
-The horizon sweep reveals a nuanced picture. Horizon $H{=}5$ achieves a return of 145.6, exceeding the default $H{=}13$ (124.3). This counterintuitive result may reflect reduced compounding of model error over shorter rollouts, combined with the relatively stable demand dynamics of canned soup where short-term planning captures most margin-relevant variation.
+The horizon sweep reveals a consistent ordering. All non-default horizons degrade performance relative to the full model at $H{=}13$: $H{=}5$ (145.6, $-$24.8\%), $H{=}25$ (135.3, $-$30.2\%), and $H{=}10$ (86.4, $-$55.4\%). The $H{=}13$ horizon---corresponding to one retail quarter---appears to balance planning depth against accumulated prediction error. Horizon $H{=}10$ performs worst, suggesting a regime where rollout length is insufficient to capture full promotional cycles but long enough for model drift to accumulate. This sensitivity to horizon length is consistent with observations by \citet{janner2019trust} in model-based RL, where the optimal planning depth depends critically on model fidelity.
 
-Horizon $H{=}10$ shows lower performance (86.4), suggesting a region where planning depth is insufficient to capture weekly promotional cycles but too long to avoid accumulated prediction drift. The non-monotonic relationship between horizon and performance highlights the sensitivity of imagination-based planning to the interaction between rollout length and model fidelity---a finding consistent with observations by \citet{janner2019trust} in model-based RL.
+The deterministic-only latent ablation ($n_\text{cat} = 1, n_\text{cls} = 1$) achieves the highest return (289.6, $+$49.5\%) alongside a markedly lower world model loss of 5.32. The reduced latent dimensionality produces a simpler model that converges faster and avoids overfitting the stochastic structure of the data. However, this comes at the cost of uncertainty quantification: without stochastic latents, the model cannot distinguish aleatoric from epistemic uncertainty, which is critical for safe deployment in non-stationary retail environments. Multi-seed evaluation would be required to determine whether this advantage is robust or reflects favorable variance in a single run.
 
-The deterministic-only latent ablation ($n_\text{cat} = 1, n_\text{cls} = 1$) achieves a substantially higher return of 289.6 alongside a markedly lower world model loss of 5.32. The reduced latent dimensionality produces a simpler model that converges faster and may avoid overfitting the stochastic structure of the data in a single-seed regime. The low WM loss indicates the model achieves a tighter reconstruction, though this comes at the cost of reduced uncertainty quantification. Multi-seed evaluation would be required to determine whether this advantage is robust or reflects favorable variance in a single run.
+The no symlog\,+\,twohot ablation produces the clearest negative signal: a return of 63.2 and a WM loss of 573.2, representing a 67.4\% degradation and a $25{\times}$ increase in loss. Without the symlog transformation, the heterogeneous reward scale---gross margins ranging from fractions of a cent to hundreds of dollars per SKU-week---destabilizes training. The MSE critic loss provides weaker gradients than the distributional twohot representation. This result strongly supports the inclusion of both techniques.
 
-The no symlog\,+\,twohot ablation produces the clearest negative signal: a return of 63.2 and a WM loss of 573.2, representing a 49.1\% degradation and a $25\times$ increase in loss. Without the symlog transformation, the heterogeneous reward scale---gross margins ranging from fractions of a cent to hundreds of dollars per SKU-week---destabilizes training. The MSE critic loss provides weaker gradients than the distributional twohot representation. This result strongly supports the inclusion of both techniques.
+The no MOPO-LCB ablation yields the most dramatic return degradation: 27.9, an 85.6\% decrease from the full model. Without the pessimistic lower confidence bound penalty, the actor exploits regions where the reward ensemble disagrees, producing overoptimistic value estimates that do not transfer to the true environment. This confirms that pessimism is essential for offline RL in the retail domain, where the logged data covers only a fraction of the price-demand space \citep{yu2020mopo, levine2020offline}.
 
-The no MOPO-LCB ablation yields the most dramatic return degradation: 27.9, a 77.5\% decrease from the full model. Without the pessimistic lower confidence bound penalty, the actor exploits regions where the reward ensemble disagrees, producing overoptimistic value estimates that do not transfer to the true environment. This confirms that pessimism is essential for offline RL in the retail domain, where the logged data covers only a fraction of the price-demand space \citep{yu2020mopo, levine2020offline}.
+The GRU backbone ablation achieves a return of 137.7 with a world model loss of 19.89---the lowest WM loss among all configurations. The lower WM loss suggests that the GRU's simpler recurrence provides a tighter fit on the training data, while the lower return ($-$28.9\%) indicates that the Mamba-2 backbone provides meaningful advantages for policy learning. The Mamba backbone's advantage may increase at longer sequence lengths or in categories with more complex temporal dynamics; at the current sequence length $T = 64$, the two architectures show measurable but moderate separation, with the GRU completing training in approximately 2 hours versus 4.4 hours for Mamba-based ablations.
 
-The GRU backbone ablation achieves a return of 137.7 with a world model loss of 19.89---the lowest WM loss among all configurations. The lower WM loss suggests that the GRU's simpler recurrence provides a tighter fit on the training data, while the slightly higher return ($+$10.8\%) indicates competitive policy performance. The \mamba{} backbone's advantage over GRU may emerge more clearly at longer sequence lengths or in categories with more complex temporal dynamics; at the current sequence length $T = 64$, the two architectures perform comparably, with the GRU completing training in approximately 2 hours versus 4.4 hours for Mamba-based ablations.
-
-The flat encoder ablation produces a return of 68.6, a 44.8\% degradation from the full model. Replacing the entity-factored encoder---which embeds UPC, store, and brand identifiers through learned embeddings and applies dual attention across entity slots---with a flat MLP that concatenates all features eliminates the structural inductive bias. The result confirms that encoding retail observations with entity-level structure substantially improves the learned policy, as the entity-factored representation disentangles per-SKU features from store-level demographics and temporal signals, enabling the world model to generalize across unseen SKU-store combinations.
+The flat encoder ablation produces a return of 68.6, a 64.6\% degradation from the full model. Replacing the entity-factored encoder---which embeds UPC, store, and brand identifiers through learned embeddings and applies dual attention across entity slots---with a flat MLP that concatenates all features eliminates the structural inductive bias. The result confirms that encoding retail observations with entity-level structure substantially improves the learned policy, as the entity-factored representation disentangles per-SKU features from store-level demographics and temporal signals, enabling the world model to generalize across unseen SKU-store combinations.
 
 \begin{figure}[h]
 \centering

@@ -1,0 +1,11 @@
+{
+  "mean_return": -13826.654898681641,
+  "std_return": 0.02171893479934123,
+  "median_return": -13826.657104492188,
+  "min_return": -13826.658569335938,
+  "max_return": -13826.438842773438,
+  "n_episodes": 100,
+  "method": "PPO",
+  "total_timesteps": 50000,
+  "eval_type": "world_model"
+}
