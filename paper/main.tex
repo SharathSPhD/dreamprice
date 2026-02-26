@@ -42,7 +42,7 @@
 \newtheorem{proposition}{Proposition}
 
 % ===== Title =====
-\title{\dreamprice{}: A Learned World Model for Retail Pricing\\via Mamba-2 Recurrence and Causal Demand Identification}
+\title{\dreamprice{}: A Causal DreamerV3 World Model\\for Offline Retail Pricing}
 
 \author{Sharath Sathish\\
   University of York\\
@@ -56,7 +56,11 @@
 \maketitle
 
 \begin{abstract}
-Retail pricing remains one of the most consequential sequential decision problems in operations research, yet no learned world model has been applied to economic environments. This paper introduces \dreamprice{}, to our knowledge the first Dreamer-style world model for retail pricing, combining \dreamer{}'s three-phase training recipe with a \mamba{} selective state-space backbone, DRAMA-style decoupled posteriors, and a causally-constrained demand decoder. The model is trained offline on the Dominick's Finer Foods scanner dataset (1989--1997, 93 stores across 29 product categories; experiments focus on the canned soup category with ${\sim}25$ SKUs) and employs MOPO-style pessimism via a 5-head reward ensemble to guard against distributional shift inherent in offline learning. Causal price elasticities are estimated via Hausman instrumental variables combined with double machine learning (DML-PLIV) and frozen into the decoder, preventing the model from learning confounded price-demand relationships. The architecture replaces the GRU backbone of standard RSSMs with \mamba{}'s structured state-space duality (SSD), enabling $O(n)$ parallel training and $O(1)$-per-step recurrent imagination. Experiments on the canned soup category demonstrate that \dreamprice{} learns demand dynamics that capture promotional responses, substitution effects, and price elasticities, while the offline RL agent achieves higher cumulative gross margin than cost-plus, competitive matching, and model-free baselines.
+Retail pricing is a high-stakes sequential decision problem in which every price change triggers a cascade of demand responses---consumers substitute across products, stockpile during promotions, and competitors react---with effects that propagate over weeks and quarters. Despite decades of work on demand estimation and price optimization, the systems used in practice rely on either structural econometric models with manually specified demand curves or model-free reinforcement learning methods that cannot perform counterfactual reasoning. No learned world model has been applied to economic environments where transition dynamics are endogenous to the agent's actions.
+
+This paper introduces \dreamprice{}, to our knowledge the first Dreamer-style world model for retail pricing. The system combines \dreamer{}'s three-phase training recipe with a \mamba{} selective state-space backbone, DRAMA-style decoupled posteriors, and a causally-constrained demand decoder. Causal price elasticities are pre-estimated via Hausman instrumental variables combined with double machine learning (DML-PLIV) and frozen into the decoder, preventing the model from learning confounded price-demand relationships from the observational data. The architecture replaces the gated recurrent unit (GRU) backbone of standard recurrent state-space models with \mamba{}'s structured state-space duality (SSD), enabling $O(n)$ parallel training and $O(1)$-per-step recurrent imagination. MOPO-style pessimism via a 5-head reward ensemble guards against distributional shift inherent in offline learning.
+
+Trained on the Dominick's Finer Foods scanner dataset (1989--1997, 93 stores, canned soup category with ${\sim}25$ stock-keeping units), \dreamprice{} achieves a world model ELBO loss of 22.44 and an actor return of 193.7 in the symlog-transformed reward space after 100K training steps. An ablation study across nine configurations confirms the contribution of each component: removing offline pessimism degrades return by 85.6\%, removing symlog and twohot representations increases world model loss by $25{\times}$, and the \mamba{} backbone yields 28.9\% higher return than a GRU alternative.
 \end{abstract}
 
 \input{sections/introduction}

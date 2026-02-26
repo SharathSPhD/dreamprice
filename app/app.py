@@ -548,7 +548,7 @@ def show_architecture():
     ax.text(
         8,
         1.0,
-        "Actor-Critic\n(PPO + MOPO-LCB)",
+        "Actor-Critic\n(REINFORCE + MOPO-LCB)",
         ha="center",
         va="center",
         fontsize=9,
@@ -642,20 +642,21 @@ def show_architecture():
 # ── Build Gradio App ──
 
 with gr.Blocks(
-    title="DreamPrice: Retail Pricing World Model",
+    title="DreamPrice: A Causal DreamerV3 World Model for Offline Retail Pricing",
 ) as demo:
     gr.Markdown(
         """
-# DreamPrice: A Learned World Model for Retail Pricing
+# DreamPrice: A Causal DreamerV3 World Model for Offline Retail Pricing
 
 A DreamerV3-based world model with Mamba-2 backbone and causal demand decoder,
-trained on Dominick's Finer Foods scanner data (100K steps, 2.6h on DGX Spark).
-Final metrics: ELBO=22.44, Actor Return=124.33.
+trained on Dominick's Finer Foods scanner data (100K steps, ~4.4h on DGX Spark).
+Final metrics: ELBO=22.44, Actor Return=193.7.
 
-[GitHub](https://github.com/SharathSPhD/dreamprice) |
-[Dataset](https://huggingface.co/datasets/qbz506/dreamprice-dominicks-cso) |
-[Model](https://huggingface.co/qbz506/dreamprice-cso) |
-[Wandb](https://wandb.ai/qbz506-technektar/dreamprice)
+<a href="https://github.com/SharathSPhD/dreamprice" target="_blank">GitHub</a> |
+<a href="https://huggingface.co/datasets/qbz506/dreamprice-dominicks-cso"
+target="_blank">Dataset</a> |
+<a href="https://huggingface.co/qbz506/dreamprice-cso" target="_blank">Model</a> |
+<a href="https://wandb.ai/qbz506-technektar/dreamprice" target="_blank">Wandb</a>
 """
     )
 
@@ -734,7 +735,7 @@ Final metrics: ELBO=22.44, Actor Return=124.33.
         """
 ---
 **DreamPrice** | Built on DreamerV3 + Mamba-2 | Dominick's Finer Foods Data |
-[GitHub](https://github.com/SharathSPhD/dreamprice) | CC-BY-NC-4.0 |
+<a href="https://github.com/SharathSPhD/dreamprice" target="_blank">GitHub</a> | CC-BY-NC-4.0 |
 Sharath Sathish, University of York
 """
     )

@@ -1,6 +1,6 @@
 # DreamPrice
 
-**A Learned World Model for Retail Pricing via Mamba-2 Recurrence and Causal Demand Identification**
+**A Causal DreamerV3 World Model for Offline Retail Pricing**
 
 [![Paper](https://img.shields.io/badge/Paper-PDF-red)](paper/main.pdf)
 [![Demo](https://img.shields.io/badge/Demo-Gradio-orange)](https://huggingface.co/spaces/qbz506/dreamprice-demo)
@@ -244,8 +244,8 @@ dreamprice/
 
 ```bibtex
 @article{sathish2026dreamprice,
-  title   = {DreamPrice: A Learned World Model for Retail Pricing
-             via Mamba-2 Recurrence and Causal Demand Identification},
+  title   = {DreamPrice: A Causal DreamerV3 World Model
+             for Offline Retail Pricing},
   author  = {Sathish, Sharath},
   year    = {2026},
   url     = {https://github.com/SharathSPhD/dreamprice}

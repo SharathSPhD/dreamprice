@@ -1,6 +1,6 @@
 ---
 title: DreamPrice Demo
-emoji: 💰
+emoji: "\U0001F4B0"
 colorFrom: blue
 colorTo: green
 sdk: gradio
@@ -10,10 +10,10 @@ pinned: false
 license: cc-by-nc-4.0
 ---
 
-# DreamPrice: Retail Pricing World Model Demo
+# DreamPrice: A Causal DreamerV3 World Model for Offline Retail Pricing
 
-Interactive demo for DreamPrice — a DreamerV3-based world model with Mamba-2 backbone
-and causal demand decoder trained on Dominick's Finer Foods scanner data.
+Interactive demo for DreamPrice -- a DreamerV3-based world model with Mamba-2 backbone
+and causal demand decoder trained on Dominick's Finer Foods scanner data (100K steps, ELBO=22.44, Actor Return=193.7).
 
 **Tabs:**
 1. **Pricing Simulator**: Adjust SKU prices and observe predicted demand/margin
